@@ -1,0 +1,32 @@
+# Basic .gitattributes for a python repo.
+# Needed so that git does not make mistakes when there are some users using mac and some using windows (Issue with character used to represent next line)
+
+#Catch all for text files not included in below config
+* text=auto eol=lf
+
+
+# Source files
+# ============
+*.pxd    text diff=python eol=lf
+*.py     text diff=python eol=lf
+*.py3    text diff=python eol=lf
+*.pyw    text diff=python eol=lf
+*.pyx    text diff=python eol=lf
+*.pyz    text diff=python eol=lf
+*.pyi    text diff=python eol=lf
+
+# Binary files
+# ============
+*.db     binary
+*.p      binary
+*.pkl    binary
+*.pickle binary
+*.pyd    binary
+
+# Jupyter notebook
+*.ipynb  text eol=lf
+
+# Note: .db, .p, and .pkl files are associated
+# with the python modules ``pickle``, ``dbm.*``,
+# ``shelve``, ``marshal``, ``anydbm``, & ``bsddb``
+# (among others).
