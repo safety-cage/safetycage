@@ -11,7 +11,7 @@ from pathlib import Path
 import pyrootutils
 
 root = pyrootutils.setup_root(search_from=Path(__file__), indicator=[".project-root"], pythonpath=True)
-from src.data.base_datahandler import BaseDataHandler
+from safetycage_testing.ABC.base_datahandler import BaseDataHandler
 
 class KerasMNISTDataHandler(BaseDataHandler):
     """Handler for MNIST data from Keras"""
