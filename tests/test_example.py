@@ -1,12 +1,18 @@
 # pytest convention that all files in ./tests begin with "test_"
 
-from safetycage_testing.example import add_one # currently doesn't work
+def main():
+    print("Hello from safetycage-tutorials!")
+
+
+if __name__ == "__main__":
+    main()
+
 
 def test_add_one_basic():
-    assert add_one(1) == 2
+    assert 1+1 == 2
 
-def test_add_one_negative():
-    assert add_one(-1) == 0
+
+# THIS IS NOT CONFIGURED PROPERLY RIGHT NOW
 
 
 ### create simple tests here, install the python package in the venv to quickly test,

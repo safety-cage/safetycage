@@ -1,0 +1,17 @@
+{
+  "folders": [
+    {
+      "name": "safetycage_pckg_dev",
+      "path": ".", 
+    },
+    {
+      "name": "examples",
+      "path": "examples"
+    },
+    {
+      "name": "tests",
+      "path": "tests"
+    }
+  ],
+  "settings": {}
+}
