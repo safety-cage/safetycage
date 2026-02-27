@@ -116,10 +116,10 @@ class SPARDACUS(SafetyCage):
         score_statistic_incorrect = None
 
         # Compute relevant statistics based on configuration
-        if self.s_statistic_source in ["correctly", "both"]:
+        if self.s_statistic_source == "correctly":
             score_statistic_correct = pdf_results["ln_pdf_h1_correct"] - pdf_results["ln_pdf_h0_correct"]
             
-        if self.s_statistic_source in ["incorrectly", "both"]:
+        if self.s_statistic_source == "incorrectly":
             score_statistic_incorrect = pdf_results["ln_pdf_h1_incorrect"] - pdf_results["ln_pdf_h0_incorrect"]
         
         # Compute ECDFs
@@ -184,17 +184,11 @@ class SPARDACUS(SafetyCage):
             
         Returns:
             np.ndarray: Combined p-values. Shape depends on s_statistic_source:
-                - if 'both': (-1, 1, 2)
-                - otherwise: vector of global p-values per sample
+                        vector of global p-values per sample
         """
         
         pvalue = self._compute_statistics(x, y)
         
-        # Handle case where we have both correct and incorrect statistics
-        if self.s_statistic_source == 'both':
-            return self._process_both_statistics(pvalue, y)
-        
-        # Handle single statistic case
         return self._combine_layer_pvalues(pvalue, len(y), self.test_type_between_layers)
 
 
@@ -205,18 +199,11 @@ class SPARDACUS(SafetyCage):
         num_samples = len(y)
         num_layers = len(selected_layers)
         
-        if self.s_statistic_source == "both":
-            pvalue = np.full(
-                shape = (num_samples, num_layers, 2),
-                fill_value = np.inf,
-                dtype = np.float64
-                )
-        else:
-            pvalue = np.full(
-                shape = (num_samples, num_layers),
-                fill_value = np.inf,
-                dtype = np.float64
-                )
+        pvalue = np.full(
+            shape = (num_samples, num_layers),
+            fill_value = np.inf,
+            dtype = np.float64
+            )
 
         # NOTE: my implementation
         # pvalue = {
@@ -265,13 +252,6 @@ class SPARDACUS(SafetyCage):
                 elif self.s_statistic_source == "incorrectly":
                     # Left-sided test. Small p-value indicates sample is correctly classified.
                     pvalue[sample_index,layer_index] = ecdf_incorrect(statistic)
-                    
-                elif self.s_statistic_source == "both":
-                    pvalue_correct = 1 - ecdf_correct(statistic)
-                    pvalue_incorrect = ecdf_incorrect(statistic)
-
-                    appended_pvals_incorrect_and_incorrect = np.array([*pvalue_correct,*pvalue_incorrect],dtype=np.float64)
-                    pvalue[sample_index,layer_index] = appended_pvals_incorrect_and_incorrect
 
                     
                 # NOTE My implementation:
@@ -294,31 +274,6 @@ class SPARDACUS(SafetyCage):
 
         
         return pvalue
-
-
-    def _process_both_statistics(self, pvalue: np.ndarray, y: np.ndarray) -> np.ndarray:
-        """Process both correct and incorrect statistics."""
-        pvalues_correct = pvalue[:, :, 0]
-        pvalues_incorrect = pvalue[:, :, 1]
-
-        combined_pvals_correct = self._combine_layer_pvalues(
-            pvalues = pvalues_correct, 
-            y_len = len(y), 
-            test_type = self.test_type_between_layers
-        )
-        
-        combined_pvals_incorrect = self._combine_layer_pvalues(
-            pvalues = pvalues_incorrect, 
-            y_len = len(y), 
-            test_type = self.test_type_between_layers
-        )
-
-        combined_pvals = np.array([
-            [combined_pvals_correct[i], combined_pvals_incorrect[i]]
-            for i in range(len(y))
-        ], dtype = np.float64)
-
-        return combined_pvals.reshape((-1, 1, 2))
 
 
     def _combine_layer_pvalues(self, pvalues: np.ndarray, y_len: int, test_type: str | None = None) -> np.ndarray:
@@ -372,30 +327,6 @@ class SPARDACUS(SafetyCage):
         #small p-value indicates sample is correctly classified. Make sure flag = 1 means prediction is deemed to be wrong
         elif self.s_statistic_source == "incorrectly":
             flags = ~(statistics <= alpha)
-
-        elif self.s_statistic_source == "both":
-            stat_built_from_correct = statistics[:,0,0]
-            stat_built_from_incorrect= statistics[:,0,1]
-
-
-            flags_correct = (stat_built_from_correct <= alpha[0])
-            flags_incorrect = ~(stat_built_from_incorrect <= alpha[1])
-
-
-            any_null_hyp_rejected = (flags_correct) | (flags_incorrect)
-            flags = np.zeros(len(statistics))
-
-            for i in range(len(statistics)):
-                
-                if any_null_hyp_rejected[i]:
-                    if flags_correct[i] == 1 and flags_incorrect[i] == 0:
-                        flags[i] = 1 # H_0 of spardacus_correctly is rejected, and spardacus_wrongly fail to reject its H_0. Both tests are in compliance
-                    elif flags_correct[i] == 0 and flags_incorrect[i] == 1: # Failed to reject H_0 of spardacus_correctly, and spardacus_wrongly reject its H_0. Both tests are in compliance
-                        flags[i] = 0
-                    else: #Both tests reject their null hypotheses, and the tests are not in compliance with each other. Choose the most significant (the least p-value) test as the most reliable one:
-                        flags[i] = 1 if stat_built_from_correct[i] < stat_built_from_incorrect[i] else 0
-                else: #Both hypothesis tests fail to reject their null hypothesis. Choose the largest p-value:
-                    flags[i] = 0 if stat_built_from_correct[i] > stat_built_from_incorrect[i] else 1
 
         return flags
 
