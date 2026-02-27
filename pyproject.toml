@@ -4,11 +4,11 @@ build-backend = "uv_build"
 
 [project]
 name = "safetycage_testing"
-version = "0.0.6"
+version = "0.0.7"
 authors = [
   { name="jq11", email="author@example.com" },
 ]
-description = "A small example package"
+description = "The package building up to the official safetycage package"
 readme = "README.md"
 requires-python = "==3.11.7"
 classifiers = [
