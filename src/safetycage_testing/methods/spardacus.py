@@ -67,19 +67,18 @@ class SPARDACUS(SafetyCage):
         }
         # Process each layer and class
         for layer in selected_layers:
-            for selected_class in tqdm(self.selected_classes):
-                class_index = self.classes.index(selected_class)
+            for class_key, class_label in tqdm(self.classes.items()):
                 
                 # Get class-specific activations
                 class_activations_correct = self._get_class_activations(
-                    layers_activations["correct"], layer, y_correct, class_index
+                    layers_activations["correct"], layer, y_correct, class_key
                 )
                 class_activations_incorrect = self._get_class_activations(
-                    layers_activations["incorrect"], layer, y_incorrect, class_index
+                    layers_activations["incorrect"], layer, y_incorrect, class_key
                 )
                 
                 # Process layer and class
-                self.layer_params[layer][class_index] = self._process_layer_class(
+                self.layer_params[layer][class_label] = self._process_layer_class(
                     class_activations_correct, class_activations_incorrect
                 )
 
@@ -227,28 +226,25 @@ class SPARDACUS(SafetyCage):
         
         activations = self.model_handler._get_activations(x)
         
-        # Compute p-values of each sample per layer using ECDF function
-        if self.model_handler.use_onehot_encoder:
-            index_function = lambda x: self.classes.index(np.argmax(x))
-        else:
-            index_function = lambda x: self.classes.index(x)
-        
         for layer_index, layer in enumerate(selected_layers): # for all layers
             for sample_index, y_sample, in enumerate(y): # for all predictions to be tested
                 
-                # index of class label
-                class_index = index_function(y_sample)
+                # Compute p-values of each sample per layer using ECDF function
+                if self.model_handler.use_onehot_encoder:
+                    class_label = self.classes[np.argmax(y_sample)]
+                else:
+                    class_label = self.classes[y_sample]
                 
                 ## Get the projection vector beta hat and the actication for the sample
                 activation = activations[layer][sample_index]
-                beta_hat = self.layer_params[layer][class_index]["beta_hat"]
+                beta_hat = self.layer_params[layer][class_label]["beta_hat"]
                 
                 # Compute observed value with respect to beta_hat_i projection for predicted class y[sample_index]:
                 activation_projected = np.dot(activation, beta_hat).reshape(1,-1)
                 
                 # Get the density functions of correctly and incorrectly predicted samples, for the layer
-                density_correct = self.layer_params[layer][class_index]["density_correct"]
-                density_incorrect = self.layer_params[layer][class_index]["density_incorrect"]
+                density_correct = self.layer_params[layer][class_label]["density_correct"]
+                density_incorrect = self.layer_params[layer][class_label]["density_incorrect"]
                 
                 # compute the s statistic for the sample
                 # since -ln(a/b) = ln(b)-ln(a)
@@ -259,8 +255,8 @@ class SPARDACUS(SafetyCage):
                 
                 
                 # Get the ECDF functions for the layer
-                ecdf_correct = self.layer_params[layer][class_index]["ecdf_correct"]
-                ecdf_incorrect = self.layer_params[layer][class_index]["ecdf_incorrect"]
+                ecdf_correct = self.layer_params[layer][class_label]["ecdf_correct"]
+                ecdf_incorrect = self.layer_params[layer][class_label]["ecdf_incorrect"]
                 
                 if self.s_statistic_source == "correctly": 
                     # Right-sided test. Small p-value indicates sample is incorrectly classfied                           

@@ -25,11 +25,6 @@ class Mahalanobis(SafetyCage):
         self.selected_layers = self.model_handler.selected_layers
         self.last_layer = self.model_handler.last_layer
         self.classes = data_handler.classes
-
-        if self.model_handler.use_onehot_encoder:
-            self.index_function = lambda x: self.classes.index(np.argmax(x))
-        else:
-            self.index_function = lambda x: self.classes.index(x)
             
         self.test_type_fn_dict = {
             "chi2": self.chi2_statistic,
@@ -64,24 +59,22 @@ class Mahalanobis(SafetyCage):
         }
         
         # Process each layer and class
-        for _class in self.selected_classes:
-            class_index = self.classes.index(_class)
-                
-            if self.model_handler.use_onehot_encoder:
-                num_observations = np.sum(y_correct[:, class_index] == 1)
-            else:
-                num_observations = np.sum(y_correct == _class)
-            
-            for layer in self.selected_layers:
-                
+        for layer in self.selected_layers:
+            for class_key, class_label in self.classes.items():
+                    
+                if self.model_handler.use_onehot_encoder:
+                    num_observations = np.sum(y_correct[:, class_key] == 1)
+                else:
+                    num_observations = np.sum(y_correct == class_key)
+                    
                 class_activations = self._get_class_activations(
                     layer_activations = layer_activations,
                     layer = layer,
                     y_data = y_correct,
-                    class_index = class_index
+                    class_index = class_key
                     )
                 
-                self.layer_params[layer][class_index] = self.compute_empirical_distribution(
+                self.layer_params[layer][class_label] = self.compute_empirical_distribution(
                     class_activations = class_activations,
                     empirical = self.empirical,
                     num_observations = num_observations
@@ -176,9 +169,12 @@ class Mahalanobis(SafetyCage):
         
         # for all predictions to be tested
         for sample_index, y_sample  in enumerate(y):
-            
+
             # get the class index
-            class_index = self.index_function(y_sample)
+            if self.model_handler.use_onehot_encoder:
+                class_label = self.classes[np.argmax(y_sample)]
+            else:
+                class_label = self.classes[y_sample]
             
             # for all layers ...
             for layer_index, layer in enumerate(self.selected_layers):
@@ -188,17 +184,17 @@ class Mahalanobis(SafetyCage):
                 
                 # If we are not at the last layer:
                 if layer != self.last_layer:
-                    pvalue[sample_index, layer_index] = test_type(activation, class_index, layer)
+                    pvalue[sample_index, layer_index] = test_type(activation, class_label, layer)
 
                 else:
                     
                     # Multivariate approach using chi2
                     if self.model_handler.use_onehot_encoder: 
-                        pvalue[sample_index, layer_index] = self.chi2_statistic(activation, class_index, layer)
+                        pvalue[sample_index, layer_index] = self.chi2_statistic(activation, class_label, layer)
                     
                     # Assume univariate normal distribution, and do a two sided-test:
                     else:
-                        pvalue[sample_index, layer_index] = self.two_sided_test(activation, class_index, layer)
+                        pvalue[sample_index, layer_index] = self.two_sided_test(activation, class_label, layer)
 
         # return p-value
         return(pvalue)

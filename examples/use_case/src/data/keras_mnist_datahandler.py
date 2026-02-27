@@ -37,7 +37,6 @@ class KerasMNISTDataHandler(BaseDataHandler):
     @property
     def classes(self) -> dict:
         """Get the class names."""
-        # return [i for i in range(0, 10)]
         return {i: str(i) for i in range(10)}
     
     @property
