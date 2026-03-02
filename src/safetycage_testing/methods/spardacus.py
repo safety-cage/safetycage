@@ -28,7 +28,7 @@ class SPARDACUS(SafetyCage):
     def name(self):
         return "SPARDACUS"
 
-    def train_cage(self, x, y, y_pred) -> None:
+    def train_cage(self, x=None, y=None, y_pred=None) -> None:
         """
         Train the spardacus safetycage  using correct and incorrect predictions.
 
@@ -37,6 +37,13 @@ class SPARDACUS(SafetyCage):
             y: Tuple of (y_correct, y_incorrect) labels
         """
         
+        if x is None:
+            x, y = self.data_handler.data_train
+        if y is None:
+            _, y = self.data_handler.data_train
+        if y_pred is None:
+            y_pred = self.model_handler._get_predictions(x)
+
         if self.model_handler.use_onehot_encoder:
             mask = np.argmax(y_pred, axis=1) == np.argmax(y, axis=1)
         else:

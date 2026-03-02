@@ -19,7 +19,7 @@ class DOCTOR(SafetyCage):
     def name(self):
         return "DOCTOR"
     
-    def train_cage(self, x, y, y_pred) -> None:
+    def train_cage(self, x=None, y=None, y_pred=None) -> None:
         """
         Compute the estimated probability of making a wrong prediction.
         
@@ -27,6 +27,11 @@ class DOCTOR(SafetyCage):
             x: Input data
             y: Tuple containing (correct_predictions, incorrect_predictions)
         """
+
+        if y is None:
+            x, y = self.data_handler.data_train
+        if y_pred is None:
+            y_pred = self.model_handler._get_predictions(x)
 
         num_incorrect = (y != y_pred).sum()
         total_samples = len(y)
