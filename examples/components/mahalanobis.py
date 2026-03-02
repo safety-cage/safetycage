@@ -40,8 +40,15 @@ class Mahalanobis(SafetyCage):
 
 
         
-    def train_cage(self, x, y, y_pred) -> None:
-        
+    def train_cage(self, x=None, y=None, y_pred=None) -> None:
+
+        if x is None:
+            x, y = self.data_handler.data_train
+        if y is None:
+            _, y = self.data_handler.data_train
+        if y_pred is None:
+            y_pred = self.model_handler._get_predictions(x)
+
         # mahalanobis distance is used to compute the p-value
 
         if self.model_handler.use_onehot_encoder:

@@ -37,7 +37,7 @@ class MSP(SafetyCage):
     def name(self):
         return "MSP"
     
-    def train_cage(self, x, y, y_pred) -> None:
+    def train_cage(self, x=None, y=None, y_pred=None) -> None:
         pass
 
     def predict(self, x, y) -> None:
