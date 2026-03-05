@@ -39,6 +39,42 @@ class SafetyCage(ABC):
     @abstractmethod
     def flag(self, statistics, alpha = None):
         pass
+
+    def find_best_threshold_flag(self, y_true, y_probs, metric_fn, greater_is_better=True) -> float | np.ndarray:
+        """
+        Call self.flag() to determine the optimal threshold.
+        """
+        if greater_is_better:
+            compare = lambda x, y: x > y
+        else:
+            compare = lambda x, y: x < y
+
+        best_metric = -np.inf 
+        best_alpha = -np.inf
+        for t in np.linspace(min(y_probs), max(y_probs), num=1000):
+
+            flag = self.flag(y_probs, t)
+
+            # flag is true when misclassification occurs
+            tps = np.sum(flag & y_true)
+            fps = np.sum(flag & (1 - y_true))
+            
+            total_pos = y_true.sum()
+            total_neg = y_true.size - total_pos
+            
+            fns = total_pos - tps
+            tns = total_neg - fps
+            
+            metric = metric_fn(TP=tps, TN=tns, FP=fps, FN=fns)
+            
+            if compare(metric, best_metric):
+                best_metric = metric
+                best_alpha = t
+                
+        return {
+            "alpha_opt": best_alpha,
+            "metric_max": best_metric,
+        }
     
     @abstractmethod
     def save_cage(self, parameters, path):

@@ -339,6 +339,7 @@ class SPARDACUS(SafetyCage):
             flags = ~(statistics <= alpha)
 
         return flags
+    
 
     def save_cage(self, path):
 

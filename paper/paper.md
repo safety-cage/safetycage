@@ -92,7 +92,7 @@ enables natural workflows for astronomers already using Astropy. Second,
 (potentials, integrators, dynamics) provides a more modular and extensible                                                            
 design than alternatives available at the time. Third, `Gala` fills a specific                                                        
 niche between simple demonstration codes and full N-body simulation packages                                                          
-like `Gadget` [@Springel:2005] – it focuses on the common tasks in galactic                                                             
+like `Gadget` [@johnsen2024spardacus] – it focuses on the common tasks in galactic                                                             
 dynamics research (orbit integration, potential evaluation, coordinate                                                                
 transformations) while maintaining both performance through C implementations                                                         
 and usability through its Python interface.  

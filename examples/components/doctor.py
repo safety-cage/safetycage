@@ -76,7 +76,6 @@ class DOCTOR(SafetyCage):
         # Return uncertainty ratio
         return error_prob / (1 - error_prob)
 
-
     def flag(self, statistics: float | np.ndarray, alpha: float | None = None) -> float | np.ndarray:
         """
         Raises a flag if the statistics are higher or equal to a given threshold.
@@ -101,8 +100,6 @@ class DOCTOR(SafetyCage):
         flags = statistics >= alpha
         
         return flags
-
-    
 
     def save_cage(self,path):
         """Save the safety cage parameters to a specified path.

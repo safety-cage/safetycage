@@ -43,12 +43,30 @@ def MCC(TP, TN, FP, FN):
 
     return mcc
 
+def accuracy(TP, TN, FP, FN):
+
+    numerator = TP + TN
+    denom = TP + TN + FP + FN
+
+    return np.divide(numerator, denom, out=np.zeros_like(TN, dtype=float), where=denom > 0)
+
+def f1_score(TP, TN, FP, FN):
+    p = precision(TP, TN, FP, FN)
+    r = recall(TP, TN, FP, FN)
+
+    numerator = 2 * p * r
+    denom = p + r
+
+    return np.divide(numerator, denom, out=np.zeros_like(TN, dtype=float), where=denom > 0)
+
 metric_functions = {
     "Precision": precision,
     "Recall": recall,
     "Specificity": specificity,
     "NPV": NPV,
     "MCC": MCC,
+    "Accuracy": accuracy,
+    "F1-score": f1_score,
 }
 
 def calculate_auroc(safetycage:SafetyCage, y_true: np.ndarray, y_scores: np.ndarray) -> float:

@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "safetycage_testing"
-version = "0.0.9"
+version = "0.1.0"
 authors = [
   { name="jq11", email="author@example.com" },
 ]
