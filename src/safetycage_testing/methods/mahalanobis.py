@@ -339,27 +339,5 @@ class Mahalanobis(SafetyCage):
 
         return flags
 
-    def save_cage(self, path):
-
-        # Create a dictionary containing all parameters including alpha
-        parameters = {
-            'alpha': self.alpha,
-            'layer_params': self.layer_params
-        }
-        
-        # Save all parameters using joblib
-        filepath = os.path.join(path, 'parameters.joblib')
-        joblib.dump(parameters, filepath)
-
-    def load_cage(self, path):
-        parameter_path = os.path.join(path, "parameters.json")
-
-        parameters = joblib.load(parameter_path)
-        
-        # Restore parameters
-        self.alpha = parameters['alpha']
-        self.layer_params = parameters['layer_params']
-
-        
 if __name__ == "__main__":
     Mahalanobis(None, None, None)

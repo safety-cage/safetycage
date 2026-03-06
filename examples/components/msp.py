@@ -89,34 +89,6 @@ class MSP(SafetyCage):
         flags = statistics <= alpha
 
         return flags
-    
-    def save_cage(self,path):
-        """Save the safety cage parameters to a specified path.
-
-        Args:
-            path (str): Path where the safety cage parameters should be saved
-        """
-        if self.alpha:
-            # Create directory if it doesn't exist
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            parameters_path = os.path.join(path, 'parameters.json')
-            # Save alpha parameter to a JSON file
-            with open(parameters_path, 'w') as f:
-                json.dump({'alpha': str(self.alpha)}, f)
-    
-    def load_cage(self, path):
-        """Load the safety cage parameters from a specified path.
-        
-        Args:
-            path (str): Path from where the safety cage parameters should be loaded
-        """
-        if os.path.exists(path):
-            with open(path, 'r') as f:
-                parameters = json.load(f)
-                self.alpha = float(parameters['alpha'])
-        else:
-            raise FileNotFoundError(f"Safety cage parameters file not found at {path}")
-
 
 if __name__ == "__main__":
     MSP(None, None)

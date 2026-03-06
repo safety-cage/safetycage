@@ -497,3 +497,6 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,linux,visualstudiocode,pycharm,python,jupyternotebooks,images,data,venv,virtualenv
+
+examples/use_case/notebooks/mnist/saved_cage/parameters.json
+examples/use_case/notebooks/mnist/saved_cage/parameters.joblib
