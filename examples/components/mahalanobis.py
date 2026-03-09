@@ -18,6 +18,8 @@ class Mahalanobis(SafetyCage):
     def __init__(self, model_handler, data_handler,**kwargs):
         super(Mahalanobis, self).__init__(model_handler, data_handler, **kwargs)
         
+        self.leq = True
+        
         self.empirical = kwargs.get("empirical")
         self.use_preactivations = kwargs.get("use_preactivations")
         self.cauchy_weights_per_layer = kwargs.get("cauchy_weights_per_layer")
@@ -327,19 +329,5 @@ class Mahalanobis(SafetyCage):
             
         return empirical_distribution_statistics
 
-    def flag(self, statistics: float | np.ndarray, alpha: float | None = None) -> float | np.ndarray:
-        # Check priority of alpha parameter
-        if alpha is None:
-            # If not provided as input, try to use self.alpha
-            if hasattr(self, 'alpha') and self.alpha is not None:
-                alpha = self.alpha
-            else:
-                # If neither source is available, raise an error
-                raise ValueError("Missing alpha parameter: must be provided as input or set as class attribute")
-            
-        flags = statistics <= alpha
-
-        return flags
-        
 if __name__ == "__main__":
     Mahalanobis(None, None, None)

@@ -12,6 +12,7 @@ import os
 class MSP(SafetyCage):
     def __init__(self, model_handler, data_handler, **kwargs):
         super(MSP, self).__init__(model_handler, data_handler, **kwargs)
+        self.leq = True
     """
     Maximum Softmax Probability (MSP) Safety Cage.
     
@@ -65,30 +66,6 @@ class MSP(SafetyCage):
         max_probabilities = np.max(probabilities, axis=1)
         
         return max_probabilities
-
-    def flag(self, statistics: float | np.ndarray, alpha: float | None = None) -> float | np.ndarray:
-        """Flag samples with max probability below alpha as incorrect.
-        This method identifies samples where the maximum probability is below a specified
-        threshold (alpha), marking them as potentially incorrect classifications.
-        Args:
-            statistics (numpy.ndarray): Array of probability values to evaluate
-            alpha (float): Threshold value for flagging samples (0 to 1)
-        Returns:
-            numpy.ndarray: Boolean array where True indicates probabilities below alpha threshold
-        """
-                
-        # Check priority of alpha parameter
-        if alpha is None:
-            # If not provided as input, try to use self.alpha
-            if hasattr(self, 'alpha') and self.alpha is not None:
-                alpha = self.alpha
-            else:
-                # If neither source is available, raise an error
-                raise ValueError("Missing alpha parameter: must be provided as input or set as class attribute")
-            
-        flags = statistics <= alpha
-
-        return flags
 
 if __name__ == "__main__":
     MSP(None, None)

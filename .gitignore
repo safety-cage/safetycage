@@ -500,3 +500,5 @@ $RECYCLE.BIN/
 
 examples/use_case/notebooks/mnist/saved_cage/parameters.json
 examples/use_case/notebooks/mnist/saved_cage/parameters.joblib
+examples/use_case/notebooks/cifar10/saved_cage/parameters.json
+examples/use_case/notebooks/cifar10/saved_cage/parameters.joblib

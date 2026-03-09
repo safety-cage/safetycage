@@ -11,6 +11,7 @@ import os
 class MSP(SafetyCage):
     def __init__(self, model_handler, data_handler, **kwargs):
         super(MSP, self).__init__(model_handler, data_handler, **kwargs)
+        self.leq = True
     """
     Maximum Softmax Probability (MSP) Safety Cage.
     

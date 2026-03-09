@@ -39,9 +39,38 @@ class SafetyCage(ABC):
         pass
 
     #Flag predictions as being correct (0) or wrong (1)
-    @abstractmethod
-    def flag(self, statistics, alpha = None):
-        pass
+    def flag(self, statistics: float | np.ndarray, alpha: float | None = None) -> float | np.ndarray:
+        """Flag samples with probability less than or equal (safetycage.leq = True) to alpha as incorrect
+        or probability more than or equal (safetycage.leq = False) to alpha as incorrect.
+        
+        This method identifies samples where the maximum/minimum probability is below/above a
+        specified threshold (alpha), marking them as potentially incorrect classifications.
+        Requires safetycage.leq to be defined, not None.
+
+        Args:
+            statistics (numpy.ndarray): Array of probability values to evaluate
+            alpha (float): Threshold value for flagging samples (0 to 1)
+        Returns:
+            numpy.ndarray: Boolean array where True indicates probabilities below alpha threshold
+        """
+                
+        # Check priority of alpha parameter
+        if alpha is None:
+            # If not provided as input, try to use self.alpha
+            if hasattr(self, 'alpha') and self.alpha is not None:
+                alpha = self.alpha
+            else:
+                # If neither source is available, raise an error
+                raise ValueError("Missing alpha parameter: must be provided as input or set as class attribute")
+            
+        if self.leq:
+            flags = statistics <= alpha
+        elif not self.leq and self.leq is not None:
+            flags = statistics >= alpha
+        else:
+            raise ValueError("Define safetycage.leq")
+
+        return flags
 
     def find_best_threshold_flag(self, y_true, y_probs, metric_fn, greater_is_better=True) -> float | np.ndarray:
         """

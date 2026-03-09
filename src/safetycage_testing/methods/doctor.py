@@ -10,6 +10,7 @@ class DOCTOR(SafetyCage):
     def __init__(self, model_handler, data_handler, **kwargs):
         super(DOCTOR, self).__init__(model_handler, data_handler, **kwargs)
         self.method = kwargs.get("method")
+        self.leq = False
 
     """
     DOCTOR  https://arxiv.org/abs/1610.02136
@@ -74,32 +75,6 @@ class DOCTOR(SafetyCage):
 
         # Return uncertainty ratio
         return error_prob / (1 - error_prob)
-
-
-    def flag(self, statistics: float | np.ndarray, alpha: float | None = None) -> float | np.ndarray:
-        """
-        Raises a flag if the statistics are higher or equal to a given threshold.
-        Args
-            statistics : float or array-like
-                The odds or probability values to check against the threshold
-            alpha : float
-                The threshold value to compare against
-        Returns:
-            flags : bool or array-like of bool
-                True where statistics >= alpha, False otherwise
-        """
-                # Check priority of alpha parameter
-        if alpha is None:
-            # If not provided as input, try to use self.alpha
-            if hasattr(self, 'alpha') and self.alpha is not None:
-                alpha = self.alpha
-            else:
-                # If neither source is available, raise an error
-                raise ValueError("Missing alpha parameter: must be provided as input or set as class attribute")
-            
-        flags = statistics >= alpha
-        
-        return flags
 
 if __name__ == "__main__":
     DOCTOR(None, None)
