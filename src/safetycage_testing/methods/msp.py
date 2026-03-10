@@ -9,8 +9,8 @@ import json
 import os
 
 class MSP(SafetyCage):
-    def __init__(self, model_handler, data_handler, **kwargs):
-        super(MSP, self).__init__(model_handler, data_handler, **kwargs)
+    def __init__(self, model_module, data_module, **kwargs):
+        super(MSP, self).__init__(model_module, data_module, **kwargs)
         self.leq = True
     """
     Maximum Softmax Probability (MSP) Safety Cage.
@@ -25,7 +25,7 @@ class MSP(SafetyCage):
     
     Attributes:
         train_cage_data (tuple): Stores training data (x,y) used to train the safety cage
-        model_handler: Reference to model handler object for making predictions
+        model_module: Reference to model module object for making predictions
     
     Methods:
         train_cage: Stores training data for the safety cage
@@ -59,7 +59,7 @@ class MSP(SafetyCage):
         """
         
         # Get softmax probabilities from model
-        probabilities = self.model_handler._get_probabilities(x)
+        probabilities = self.model_module._get_probabilities(x)
         
         # Get maximum probability for each sample
         max_probabilities = np.max(probabilities, axis=1)

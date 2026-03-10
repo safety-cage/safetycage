@@ -3,7 +3,7 @@ from typing import Tuple, Union, List, Any, Dict
 import numpy as np
 import omegaconf
 
-class ModelHandler(ABC):
+class ModelModule(ABC):
     def __init__(
         self,
         selected_layers:Union[str, List[str]],
@@ -11,7 +11,7 @@ class ModelHandler(ABC):
         model:Any,
         **kwargs
         ):
-        super(ModelHandler, self).__init__()
+        super(ModelModule, self).__init__()
         
         self.model = model
         self.use_onehot_encoder = use_onehot_encoder
@@ -57,4 +57,4 @@ class ModelHandler(ABC):
     
 if __name__ == '__main__':
     #Quick test to confirm it builds
-    model_handler = ModelHandler()
+    model_module = ModelModule()

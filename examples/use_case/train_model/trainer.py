@@ -8,11 +8,11 @@ from tensorflow.keras.callbacks import EarlyStopping
 class Trainer:
     def __init__(
         self,
-        data_handler, 
+        data_module, 
         model,
         model_path = None
         ):
-        self.data_handler = data_handler
+        self.data_module = data_module
         self.model = model
         
     def fit(self, epochs=100):
@@ -22,8 +22,8 @@ class Trainer:
         
         # Train model
         history = self.model.fit(
-            self.data_handler.train_dataset(),
-            validation_data=self.data_handler.val_dataset(),
+            self.data_module.train_dataset(),
+            validation_data=self.data_module.val_dataset(),
             epochs=epochs,
             callbacks=[EarlyStopping(monitor='val_loss', patience=10)]
         )
@@ -32,7 +32,7 @@ class Trainer:
 
     def test(self, dataset=None):
         if dataset is None:
-            dataset = self.data_handler.test_dataset()
+            dataset = self.data_module.test_dataset()
 
         # Get predictions and true labels
         y_test_pred = []
@@ -83,19 +83,19 @@ class Trainer:
 
     def predict_all(self):
         y_pred_train = self.predict(
-            dataset = self.data_handler.train_dataset()
+            dataset = self.data_module.train_dataset()
         )
         
         # Convert predictions to one-hot encoding
         y_pred_train = tf.keras.utils.to_categorical(y_pred_train, num_classes=10)
         
         y_pred_val = self.predict(
-            dataset = self.data_handler.val_dataset()
+            dataset = self.data_module.val_dataset()
         )
         y_pred_val = tf.keras.utils.to_categorical(y_pred_val, num_classes=10)
 
         y_pred_test = self.predict(
-            dataset = self.data_handler.test_dataset()
+            dataset = self.data_module.test_dataset()
         )
         y_pred_test = tf.keras.utils.to_categorical(y_pred_test, num_classes=10)
         

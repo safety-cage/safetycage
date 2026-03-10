@@ -7,8 +7,8 @@ pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 from ..ABC.safetycage import SafetyCage
 
 class DOCTOR(SafetyCage):
-    def __init__(self, model_handler, data_handler, **kwargs):
-        super(DOCTOR, self).__init__(model_handler, data_handler, **kwargs)
+    def __init__(self, model_module, data_module, **kwargs):
+        super(DOCTOR, self).__init__(model_module, data_module, **kwargs)
         self.method = kwargs.get("method")
         self.leq = False
 
@@ -30,9 +30,9 @@ class DOCTOR(SafetyCage):
         """
 
         if y is None:
-            x, y = self.data_handler.data_train
+            x, y = self.data_module.data_train
         if y_pred is None:
-            y_pred = self.model_handler._get_predictions(x)
+            y_pred = self.model_module._get_predictions(x)
 
         num_incorrect = (y != y_pred).sum()
         total_samples = len(y)
@@ -61,7 +61,7 @@ class DOCTOR(SafetyCage):
             ValueError: If method is not 'max' or 'sum'
         """
         # Get prediction probabilities from model
-        probs = self.model_handler._get_probabilities(x)
+        probs = self.model_module._get_probabilities(x)
         
         # Calculate error probability based on selected method
         if self.method == "max":

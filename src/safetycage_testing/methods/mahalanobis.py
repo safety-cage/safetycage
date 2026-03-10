@@ -13,8 +13,8 @@ from ..utils.functions_library import CauchyCombinationTest
 from ..ABC.safetycage import SafetyCage
 
 class Mahalanobis(SafetyCage):
-    def __init__(self, model_handler, data_handler,**kwargs):
-        super(Mahalanobis, self).__init__(model_handler, data_handler, **kwargs)
+    def __init__(self, model_module, data_module,**kwargs):
+        super(Mahalanobis, self).__init__(model_module, data_module, **kwargs)
         
         self.leq = True
 
@@ -24,9 +24,9 @@ class Mahalanobis(SafetyCage):
         self.test_type_between_layers = kwargs.get("test_type_between_layers")
         self.test_type_within_layer = kwargs.get("test_type_within_layer")
         
-        self.selected_layers = self.model_handler.selected_layers
-        self.last_layer = self.model_handler.last_layer
-        self.classes = data_handler.classes
+        self.selected_layers = self.model_module.selected_layers
+        self.last_layer = self.model_module.last_layer
+        self.classes = data_module.classes
             
         self.test_type_fn_dict = {
             "chi2": self.chi2_statistic,
@@ -43,15 +43,15 @@ class Mahalanobis(SafetyCage):
     def train_cage(self, x=None, y=None, y_pred=None) -> None:
         
         if x is None:
-            x, y = self.data_handler.data_train
+            x, y = self.data_module.data_train
         if y is None:
-            _, y = self.data_handler.data_train
+            _, y = self.data_module.data_train
         if y_pred is None:
-            y_pred = self.model_handler._get_predictions(x)
+            y_pred = self.model_module._get_predictions(x)
         
         # mahalanobis distance is used to compute the p-value
 
-        if self.model_handler.use_onehot_encoder:
+        if self.model_module.use_onehot_encoder:
             mask = np.argmax(y_pred, axis=1) == np.argmax(y, axis=1)
         else:
             mask = y_pred == y
@@ -60,7 +60,7 @@ class Mahalanobis(SafetyCage):
         y_correct = y[mask]
 
 
-        layer_activations =  self.model_handler._get_pre_activations(x_correct)
+        layer_activations =  self.model_module._get_pre_activations(x_correct)
         
         self.layer_params = {
             layer: {class_index: {} for class_index in self.classes}
@@ -71,7 +71,7 @@ class Mahalanobis(SafetyCage):
         for layer in self.selected_layers:
             for class_key, class_label in self.classes.items():
                     
-                if self.model_handler.use_onehot_encoder:
+                if self.model_module.use_onehot_encoder:
                     num_observations = np.sum(y_correct[:, class_key] == 1)
                 else:
                     num_observations = np.sum(y_correct == class_key)
@@ -94,7 +94,7 @@ class Mahalanobis(SafetyCage):
     def _get_class_activations(self, layer_activations: dict, layer: str, 
                             y_data: np.ndarray, class_index: int) -> np.ndarray:
         """Extract class-specific activations based on labels."""
-        if self.model_handler.use_onehot_encoder:
+        if self.model_module.use_onehot_encoder:
             return layer_activations[layer][y_data[:, class_index] == 1, :]
         
         return layer_activations[layer][y_data == class_index, :]
@@ -170,7 +170,7 @@ class Mahalanobis(SafetyCage):
             dtype  = np.float64
         )
                 
-        activations = self.model_handler._get_pre_activations(x)
+        activations = self.model_module._get_pre_activations(x)
 
         test_type = self.test_type_fn_dict[self.test_type_within_layer]
 
@@ -180,7 +180,7 @@ class Mahalanobis(SafetyCage):
         for sample_index, y_sample  in enumerate(y):
 
             # get the class index
-            if self.model_handler.use_onehot_encoder:
+            if self.model_module.use_onehot_encoder:
                 class_label = self.classes[np.argmax(y_sample)]
             else:
                 class_label = self.classes[y_sample]
@@ -198,7 +198,7 @@ class Mahalanobis(SafetyCage):
                 else:
                     
                     # Multivariate approach using chi2
-                    if self.model_handler.use_onehot_encoder: 
+                    if self.model_module.use_onehot_encoder: 
                         pvalue[sample_index, layer_index] = self.chi2_statistic(activation, class_label, layer)
                     
                     # Assume univariate normal distribution, and do a two sided-test:

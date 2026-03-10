@@ -15,15 +15,15 @@ pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
 
 class SPARDACUS(SafetyCage):
-    def __init__(self, model_handler, data_handler, **kwargs):
-        super(SPARDACUS, self).__init__(model_handler, data_handler, **kwargs)
+    def __init__(self, model_module, data_module, **kwargs):
+        super(SPARDACUS, self).__init__(model_module, data_module, **kwargs)
 
         self.s_statistic_source = kwargs.get("s_statistic_source")
         self.alpha = kwargs.get("alpha", None)
         self.cauchy_weights_per_layer = kwargs.get("cauchy_weights_per_layer")
         self.test_type_between_layers = kwargs.get("test_type_between_layers")
 
-        self.classes = data_handler.classes
+        self.classes = data_module.classes
     @property
     def name(self):
         return "SPARDACUS"
@@ -38,13 +38,13 @@ class SPARDACUS(SafetyCage):
         """
         
         if x is None:
-            x, y = self.data_handler.data_train
+            x, y = self.data_module.data_train
         if y is None:
-            _, y = self.data_handler.data_train
+            _, y = self.data_module.data_train
         if y_pred is None:
-            y_pred = self.model_handler._get_predictions(x)
+            y_pred = self.model_module._get_predictions(x)
 
-        if self.model_handler.use_onehot_encoder:
+        if self.model_module.use_onehot_encoder:
             mask = np.argmax(y_pred, axis=1) == np.argmax(y, axis=1)
         else:
             mask = y_pred == y
@@ -61,13 +61,13 @@ class SPARDACUS(SafetyCage):
         
         # Get layer activations
         layers_activations = {
-            "correct": self.model_handler._get_activations(x_correct),
-            "incorrect": self.model_handler._get_activations(x_incorrect)
+            "correct": self.model_module._get_activations(x_correct),
+            "incorrect": self.model_module._get_activations(x_incorrect)
         }
         
 
         # Initialize parameters dictionary
-        selected_layers = self.model_handler.selected_layers
+        selected_layers = self.model_module.selected_layers
         self.layer_params = {
             layer: {class_index: {} for class_index in self.classes}
             for layer in selected_layers
@@ -93,7 +93,7 @@ class SPARDACUS(SafetyCage):
     def _get_class_activations(self, layer_activations: dict, layer: str, 
                             y_data: np.ndarray, class_index: int) -> np.ndarray:
         """Extract class-specific activations based on labels."""
-        if self.model_handler.use_onehot_encoder:
+        if self.model_module.use_onehot_encoder:
             return layer_activations[layer][y_data[:, class_index] == 1, :]
         
         return layer_activations[layer][y_data == class_index, :]
@@ -201,7 +201,7 @@ class SPARDACUS(SafetyCage):
 
     def _compute_statistics(self, x, y):
         
-        selected_layers = self.model_handler.selected_layers
+        selected_layers = self.model_module.selected_layers
 
         num_samples = len(y)
         num_layers = len(selected_layers)
@@ -218,13 +218,13 @@ class SPARDACUS(SafetyCage):
         # }
         # get activation for all predictions
         
-        activations = self.model_handler._get_activations(x)
+        activations = self.model_module._get_activations(x)
         
         for layer_index, layer in enumerate(selected_layers): # for all layers
             for sample_index, y_sample, in enumerate(y): # for all predictions to be tested
                 
                 # Compute p-values of each sample per layer using ECDF function
-                if self.model_handler.use_onehot_encoder:
+                if self.model_module.use_onehot_encoder:
                     class_label = self.classes[np.argmax(y_sample)]
                 else:
                     class_label = self.classes[y_sample]

@@ -9,9 +9,9 @@ import pyrootutils
 
 root = pyrootutils.setup_root(search_from=Path(__file__), indicator=[".project-root"], pythonpath=True)
 
-from safetycage_testing.ABC.base_modelhandler import ModelHandler
+from safetycage_testing.ABC.modelmodule import ModelModule
 
-class ModelHandlerKeras(ModelHandler):
+class KerasModelModule(ModelModule):
     def __init__(
         self,
         selected_layers: List[str],
@@ -19,15 +19,15 @@ class ModelHandlerKeras(ModelHandler):
         model: Any,
         **kwargs
         ):
-        super(ModelHandlerKeras, self).__init__(
+        super(KerasModelModule, self).__init__(
             selected_layers,
             use_onehot_encoder,
             model,
             **kwargs
             )
         """
-        Initialize ModelHandler with pre-loaded dataset and model.
-        ModelHandler needs to calculate the following:
+        Initialize ModelModule with pre-loaded dataset and model.
+        ModelModule needs to calculate the following:
             - pre_activations of any given layer
             - activations of any given layer
             - model_shape:
@@ -144,4 +144,4 @@ class ModelHandlerKeras(ModelHandler):
         return shape_dict
         
 if __name__ == '__main__':
-    model_handler = ModelHandlerKeras()
+    model_module = KerasModelModule()

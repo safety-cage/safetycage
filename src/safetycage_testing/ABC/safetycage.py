@@ -10,16 +10,16 @@ pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 class SafetyCage(ABC):
     def __init__(
         self,
-        model_handler,
-        data_handler: Any,
+        model_module,
+        data_module: Any,
         **kwargs
         ) -> None:
 
-        self.model_handler = model_handler
-        self.data_handler = data_handler
+        self.model_module = model_module
+        self.data_module = data_module
         
-        self.num_classes = data_handler.num_classes
-        self.selected_classes = data_handler.classes
+        self.num_classes = data_module.num_classes
+        self.selected_classes = data_module.classes
         
         self.alpha = None
         

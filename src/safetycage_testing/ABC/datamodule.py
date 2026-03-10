@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Any
 from pathlib import Path
 
-class BaseDataHandler(ABC):
+class DataModule(ABC):
     """Abstract base class for handling batched data regardless of source"""
     
     def __init__(
@@ -47,8 +47,8 @@ class BaseDataHandler(ABC):
 
     @abstractmethod
     def setup(self) -> None:
-        """Setup the data handler, should be implemented by subclasses"""
-        raise NotImplementedError("Subclasses should implement this method to setup the data handler.")
+        """Setup the data module, should be implemented by subclasses"""
+        raise NotImplementedError("Subclasses should implement this method to setup the data module.")
 
 
     @abstractmethod
@@ -70,10 +70,10 @@ class BaseDataHandler(ABC):
     
     @abstractmethod
     def to_joblib(self, path: str) -> None:
-        """Save the data handler to a joblib file."""
-        raise NotImplementedError("Subclasses should implement this method to save the data handler to a joblib file.")
+        """Save the data module to a joblib file."""
+        raise NotImplementedError("Subclasses should implement this method to save the data module to a joblib file.")
     
     @abstractmethod
     def from_joblib(self, path: str) -> None:
-        """Load the data handler from a joblib file."""
-        raise NotImplementedError("Subclasses should implement this method to load the data handler from a joblib file.")
+        """Load the data module from a joblib file."""
+        raise NotImplementedError("Subclasses should implement this method to load the data module from a joblib file.")

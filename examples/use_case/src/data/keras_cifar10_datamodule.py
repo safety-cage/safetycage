@@ -10,11 +10,10 @@ from pathlib import Path
 import pyrootutils
 
 root = pyrootutils.setup_root(search_from=Path(__file__), indicator=[".project-root"], pythonpath=True)
-# from src.data.base_datahandler import BaseDataHandler
-from safetycage_testing.ABC.base_datahandler import BaseDataHandler
+from safetycage_testing.ABC.datamodule import DataModule
 
-class KerasCIFAR10DataHandler(BaseDataHandler):
-    """Handler for CIFAR10 data from Keras"""
+class CIFAR10DataModule(DataModule):
+    """Module for CIFAR10 data from Keras"""
 
     def __init__(
         self,
@@ -32,7 +31,7 @@ class KerasCIFAR10DataHandler(BaseDataHandler):
         self.use_onehot_encoder = use_onehot_encoder
         self.rgb2grey = rgb2grey
 
-        # setup the data handler
+        # setup the data module
         self.setup()
         
     @property
@@ -63,7 +62,7 @@ class KerasCIFAR10DataHandler(BaseDataHandler):
 
 
     def setup(self)->None:
-        """Setup the data handler by loading and transforming the dataset."""
+        """Setup the data module by loading and transforming the dataset."""
         # Load data if saved, else download
         
         path_data = (self.data_dir / self.dataset_name).with_suffix(".npz")
@@ -229,14 +228,14 @@ class KerasCIFAR10DataHandler(BaseDataHandler):
 
 
     def to_joblib(self, path: Optional[str] = None):
-        """Save the data handler to a joblib file.
+        """Save the data module to a joblib file.
 
         Args:
             path (Optional[str], optional): The path to save the joblib file. Defaults to None.
         """
         
         if path is None:
-            path = (self.data_dir/f"{self.dataset_name}_data_handler").with_suffix(".joblib")
+            path = (self.data_dir/f"{self.dataset_name}_data_module").with_suffix(".joblib")
         
         # Create parent directory if it doesn't exist
         Path(path).parent.mkdir(parents=True, exist_ok=True)
@@ -245,10 +244,10 @@ class KerasCIFAR10DataHandler(BaseDataHandler):
             
             
     def from_joblib(self, path: Optional[str] = None):
-        """Load the data handler from a joblib file."""
+        """Load the data module from a joblib file."""
         
         if path is None:
-            path = (self.data_dir/f"{self.dataset_name}_data_handler").with_suffix(".joblib")
+            path = (self.data_dir/f"{self.dataset_name}_data_module").with_suffix(".joblib")
 
         return joblib.load(path)
     
