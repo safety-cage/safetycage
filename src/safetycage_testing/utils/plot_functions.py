@@ -16,13 +16,20 @@ def annotate_text_box(
     label_prefix: str = "Best",
     side: str = "auto",          # "left" | "right" | "auto"
     vertical: str = "auto",      # "top" | "bottom" | "auto"
+    # layout parameters
     dx: float = 0.0,
     dy: float = 0.0,
     point: bool = True,
     point_size: int = 3,
     zorder: int = 3,
+    label_x_offset: float = 0.08,   # horizontal distance from point
+    label_y_offset: float = 0.05,   # vertical distance from point
+    pad_fraction_x: float = 0.02,   # padding as fraction of axis width
+    pad_fraction_y: float = 0.01,   # padding as fraction of axis height
+    bbox_pad: float = 0.3,          # value passed to boxstyle round,pad=
+    bbox_lw: float = 1.0,
+    arrow_lw: float = 1.5,
     ):
-
     """
     Annotate a point (x,y) with a text box and arrow.
     This is designed specifically for annotating the alpha curve.
@@ -60,11 +67,11 @@ def annotate_text_box(
     sy = +1 if vertical == "top" else -1
 
     # Calculate better position for annotation text to ensure it's inside the figure
-    text_x = x + sx * (0.08 + dx)
-    text_y = y + sy * (0.05 + dy)
+    text_x = x + sx * (label_x_offset + dx)
+    text_y = y + sy * (label_y_offset + dy)
 
-    pad_x = 0.02 * (xmax - xmin)
-    pad_y = 0.01 * (ymax - ymin)
+    pad_x = pad_fraction_x * (xmax - xmin)
+    pad_y = pad_fraction_y * (ymax - ymin)
     text_x = min(max(text_x, xmin + pad_x), xmax - pad_x) # 0.02 * (xmax - xmin) <= x <= x + sx * (0.08 + dx)
     text_y = min(max(text_y, ymin + pad_y), ymax - pad_y)
     
@@ -73,12 +80,11 @@ def annotate_text_box(
     va = "bottom" if vertical == "top" else "top"
 
     ax.annotate(
-        text = f"{label_prefix} alpha: {x:.3f}\nMax {metric_name}: {y:.3f}",
+        text=f"{label_prefix} alpha: {x:.3f}\nMax {metric_name}: {y:.3f}",
         xy=(x, y),
         xytext=(text_x, text_y),
-        # textcoords = 'offset points',
-        bbox=dict(boxstyle="round,pad=0.3", fc="white", ec=colour, lw=1),
-        arrowprops=dict(arrowstyle="->", connectionstyle="arc3", color=colour, lw=1.5),
+        bbox=dict(boxstyle=f"round,pad={bbox_pad}", fc="white", ec=colour, lw=bbox_lw),
+        arrowprops=dict(arrowstyle="->", connectionstyle="arc3", color=colour, lw=arrow_lw),
         ha=ha, va=va, zorder=zorder,
     )
 
@@ -97,35 +103,61 @@ def plot_alpha_metric_curve(
     output_path: str,
     alpha_val: float,
     metric_val: float,
+    # layout parameters
     xlim: tuple[float, float] | None = None,
     ylim: tuple[float, float] | None = None,
     save: bool = True,
-    opt_label_offset: tuple[float, float] = (0.0, 0.0), # by default
-    val_label_offset: tuple[float, float] = (0.0, 0.0)
-    ):
-
-    plt.plot(alphas, metric_values, zorder=-1)
-    plt.plot(thresholds, scores, zorder=-1)
+    opt_label_offset: tuple[float, float] = (0.0, 0.0),
+    val_label_offset: tuple[float, float] = (0.0, 0.0),
+    zorder: int = -1,
+    y_padding: float = 10.0,            # divide (ymax-ymin) by this to get ylim padding, to ensure labels fit in figure
+    test_colour: str = "blue",
+    val_colour: str = "red",
+    test_vertical: str = "top",
+    val_vertical: str = "bottom",
+    save_dpi: int = 300,
+    ) -> None:
+    plt.plot(alphas, metric_values, zorder=zorder)
+    plt.plot(thresholds, scores, zorder=zorder)
 
     xlim = (min(min(alphas), min(thresholds)), max(max(alphas), max(thresholds)))
     ymin = min(min(metric_values), min(scores))
     ymax = max(max(metric_values), max(scores))
-    ylim = (ymin, ymax + (np.divide(ymax- ymin, 10)))
+    ylim = (ymin, ymax + (np.divide(ymax - ymin, y_padding)))
 
     plt.xlim(*xlim)
     plt.ylim(*ylim)
 
     dx, dy = opt_label_offset
-    annotate_text_box(alpha_opt, metric_max, metric_name, label_prefix="Test", colour="blue", vertical = "top", dx = dx, dy = dy)
+    annotate_text_box(
+        alpha_opt,
+        metric_max,
+        metric_name,
+        label_prefix="Test",
+        colour=test_colour,
+        vertical=test_vertical,
+        dx=dx,
+        dy=dy,
+    )
+
     dx, dy = val_label_offset
-    annotate_text_box(alpha_val, metric_val, metric_name, label_prefix="Val",  colour="red", vertical = "bottom", dx = dx, dy = dy)
+    annotate_text_box(
+        alpha_val,
+        metric_val,
+        metric_name,
+        label_prefix="Val",
+        colour=val_colour,
+        vertical=val_vertical,
+        dx=dx,
+        dy=dy,
+    )
 
     plt.xlabel("Alpha")
     plt.ylabel(metric_name)
     if save:
         path = os.path.join(output_path, f"alpha_{metric_name}_curve.png")
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        plt.savefig(path, dpi=300)
+        plt.savefig(path, dpi=save_dpi)
     plt.close()
 
 
@@ -166,19 +198,30 @@ def plot_roc_curve(
     tpr, fpr, thresholds,
     output_path: str,
     save:bool = True,
+    fig_dimensions = (6,6),
+    curve_color: str = "blue",
+    fill_in_curve: bool = False,
+    fill_in_opacity: float = 0.3,
+    diag_color: str = "red",
+    diag_linestyle: str = "--",
+    xlim: tuple[float, float] = [0.0, 1.0],
+    ylim: tuple[float, float] = [0.0, 1.0],
+    save_dpi: int = 300
     ):
     
-    plt.figure(figsize=(6,6))
+    plt.figure(figsize=fig_dimensions)
 
     # Plot the ROC curve with correct axes
-    plt.plot(fpr,tpr, color='blue')
+    plt.plot(fpr, tpr, color=curve_color)
 
-    # Add shaded area under the curve
-    # plt.fill_between(tpr, fpr, alpha=0.3, color='blue')
+     # [OPTIONALLY: Default = False] Add shaded area under the curve
+    if fill_in_curve:
+        plt.fill_between(fpr, tpr, alpha=fill_in_opacity, color=curve_color)
 
-    plt.plot([0, 1], [0, 1], color='red', linestyle='--')  # Diagonal line
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.0])
+
+    plt.plot(xlim, ylim, color=diag_color, linestyle=diag_linestyle)  # Diagonal line
+    plt.xlim(xlim)
+    plt.ylim(ylim)
     plt.gca().set_aspect('equal')
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
@@ -187,5 +230,5 @@ def plot_roc_curve(
     if save is True:
         path = os.path.join(output_path, "roc_curve.png")
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        plt.savefig(path)
+        plt.savefig(path, dpi=save_dpi)
     plt.close()

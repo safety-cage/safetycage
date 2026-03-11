@@ -167,12 +167,6 @@ def calculate_metrics(
         
     return metrics_dict
 
-"""
-for t in thres:
-
-
-"""
-
 def find_best_threshold(y_true, y_probs, metric_fn, greater_is_better=True, leq=True):
     """
     Find thresholds that maximize a given metric.
@@ -259,7 +253,7 @@ def calculate_negative_metric(alpha:float, metric_fn, statistics:np.ndarray, saf
 
 
 
-def calculate_roc_curve(safetycage: SafetyCage, y_true: np.ndarray, statistics: np.ndarray, num_thresholds: int = 1e3) -> tuple:
+def calculate_roc_curve(safetycage: SafetyCage, y_true: np.ndarray, statistics: np.ndarray, num_thresholds: int = 1e3, threshold_min: int = 0, threshold_max: int = 1) -> tuple:
     """
     Calculate the ROC curve data points using the SafetyCage's own flag function.
     This handles different flag implementations across various SafetyCage implementations.
@@ -269,6 +263,8 @@ def calculate_roc_curve(safetycage: SafetyCage, y_true: np.ndarray, statistics: 
         y_true (np.ndarray): True binary labels (incorrect predictions)
         statistics (np.ndarray): Statistics/scores computed from the SafetyCage
         num_thresholds (int, optional): Number of threshold points to use. Defaults to 100.
+        threshold_min (int, optional): Minimum threshold value. Defaults to 0.
+        threshold_max (int, optional): Maximum threshold value. Defaults to 1.
         
     Returns:
         tuple: A tuple containing (fpr, tpr, thresholds)
@@ -277,7 +273,7 @@ def calculate_roc_curve(safetycage: SafetyCage, y_true: np.ndarray, statistics: 
             - thresholds (np.ndarray): Threshold values used
     """
     
-    thresholds = np.linspace(0, 1, int(num_thresholds))
+    thresholds = np.linspace(threshold_min, threshold_max, int(num_thresholds))
 
     # Initialize arrays to store TPR and FPR values
     tpr_values = []

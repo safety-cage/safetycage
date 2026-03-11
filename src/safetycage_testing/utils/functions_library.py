@@ -50,7 +50,6 @@ def fastSPARDA(X_samples, Y_samples, **kwargs):
 
     x_foldsize = n // num_folds
     y_foldsize = m // num_folds
-    best_heldout = 0
     prev_beta = np.zeros(d)
     prev_beta[0] = 0.5
 
