@@ -3,12 +3,6 @@
 **/outputs/
 **/logs/
 
-# model folder
-examples/use_case/model/
-
-# use case data folder
-examples/use_case/data/
-
 # Created by https://www.toptal.com/developers/gitignore/api/macos,windows,linux,visualstudiocode,pycharm,python,jupyternotebooks,images,data,venv,virtualenv
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,windows,linux,visualstudiocode,pycharm,python,jupyternotebooks,images,data,venv,virtualenv
 
@@ -497,8 +491,3 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,linux,visualstudiocode,pycharm,python,jupyternotebooks,images,data,venv,virtualenv
-
-examples/use_case/notebooks/mnist/saved_cage/parameters.json
-examples/use_case/notebooks/mnist/saved_cage/parameters.joblib
-examples/use_case/notebooks/cifar10/saved_cage/parameters.json
-examples/use_case/notebooks/cifar10/saved_cage/parameters.joblib

@@ -141,6 +141,7 @@ class SafetyCage(ABC):
     def load_cage(self, path):
         """Load the safety cage parameters, alpha and/or layer_params, from a specified folder path.
         Looks for a parameters.json or parameters.joblib file respectively.
+        Load cage assumes only one of these two files are present in the folder, and gives priority to parameters.joblib if both are present.
 
         Args:
             path (str): Path from where the safety cage parameters should be loaded
