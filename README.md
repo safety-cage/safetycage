@@ -1,6 +1,6 @@
-# safetycage-pypi (SafetyCage Test Package)
+# safetycage(-pypi) (SafetyCage Test Package)
 
-This is the git repo that hosts the development and testing of the safetycage python package (src and examples & tests respectfully).
+This is the git repo that hosts the development and testing of the safetycage python package (src & tests respectfully).
 
 ## Integrate with your tools
 
