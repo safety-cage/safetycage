@@ -303,7 +303,7 @@ wheels = [
 
 [[package]]
 name = "safetycage-testing"
-version = "0.1.4"
+version = "0.1.6"
 source = { editable = "." }
 dependencies = [
     { name = "joblib" },
@@ -315,6 +315,11 @@ dependencies = [
     { name = "scipy" },
     { name = "statsmodels" },
     { name = "tqdm" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "safetycage-testing" },
 ]
 
 [package.metadata]
@@ -329,6 +334,9 @@ requires-dist = [
     { name = "statsmodels", specifier = "==0.13.5" },
     { name = "tqdm", specifier = ">=4.67.3" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "safetycage-testing", editable = "." }]
 
 [[package]]
 name = "scikit-learn"

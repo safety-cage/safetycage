@@ -7,6 +7,7 @@ from scipy.stats import combine_pvalues
 from sklearn.mixture import GaussianMixture
 from sklearn.model_selection import GridSearchCV
 from statsmodels.distributions.empirical_distribution import ECDF
+import warnings
 
 from ..utils.functions_library import CauchyCombinationTest, fastSPARDA, gmm_bic_score
 from ..ABC.safetycage import SafetyCage
@@ -15,6 +16,11 @@ pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
 
 class SPARDACUS(SafetyCage):
+    """
+    SPARDACUS is a safety cage method that combines the fastSPARDA algorithm for dimensionality reduction with Gaussian Mixture Models for density estimation, and uses ECDFs to compute p-values for safety testing. The method allows for flexible configuration of the source of the S statistic, the method for combining p-values across layers, and the parameters for fitting the Gaussian Mixture Models.   
+    
+    SPARDACUS can not be used for non-neural network models, ... 
+    """
     def __init__(self, model_module, data_module, **kwargs):
         super(SPARDACUS, self).__init__(model_module, data_module, **kwargs)
 
@@ -23,7 +29,13 @@ class SPARDACUS(SafetyCage):
         self.cauchy_weights_per_layer = kwargs.get("cauchy_weights_per_layer")
         self.test_type_between_layers = kwargs.get("test_type_between_layers")
 
+        # For the Gaussian Mixture Model fitting. Must be at least 3 based on current implementation (see _fit_gaussian_mixture). Default value is 10.
+        if "minimum_sample_size" in kwargs and kwargs["minimum_sample_size"] < 3:
+            raise ValueError(f"minimum_sample_size must be at least 3 based on the current implementation of _fit_gaussian_mixture in SPARDACUS. Provided: {kwargs['minimum_sample_size']}")
+        self.minimum_sample_size = kwargs.get("minimum_sample_size", 10)
+
         self.classes = data_module.classes
+        self.unreliable_classes = set()
     @property
     def name(self):
         return "SPARDACUS"
@@ -64,7 +76,6 @@ class SPARDACUS(SafetyCage):
             "correct": self.model_module._get_activations(x_correct),
             "incorrect": self.model_module._get_activations(x_incorrect)
         }
-        
 
         # Initialize parameters dictionary
         selected_layers = self.model_module.selected_layers
@@ -86,7 +97,7 @@ class SPARDACUS(SafetyCage):
                 
                 # Process layer and class
                 self.layer_params[layer][class_label] = self._process_layer_class(
-                    class_activations_correct, class_activations_incorrect
+                    class_activations_correct, class_activations_incorrect, class_label
                 )
 
 
@@ -99,8 +110,21 @@ class SPARDACUS(SafetyCage):
         return layer_activations[layer][y_data == class_index, :]
 
 
-    def _process_layer_class(self,class_activations_correct: np.ndarray, class_activations_incorrect: np.ndarray) -> dict:
+    def _process_layer_class(self, class_activations_correct: np.ndarray, class_activations_incorrect: np.ndarray, class_label: str) -> dict:
         """Process activations for a single layer and class."""
+        # Double check if both class_activations_correct and class_activations_incorrect have a positive number of values
+        if len(class_activations_incorrect) == 0 or len(class_activations_correct) == 0:
+            warnings.warn(f"No incorrect and/or correct samples for class \"{class_label}\" exist in layer activations. This class will be flagged as unreliable and the results "
+                          "for this class are unreliable. We recommend using a different safetycage method or ensuring some incorrect and/or correct samples exist in this class.")
+            self.unreliable_classes.add(class_label)
+            return {
+                "ecdf_correct": None,
+                "ecdf_incorrect": None,
+                "beta_hat": None,
+                "density_correct": None,
+                "density_incorrect": None
+            }
+        
         # Run fastSPARDA
         beta_hat, _, _, _ = fastSPARDA(
             X_samples = class_activations_correct, 
@@ -112,9 +136,20 @@ class SPARDACUS(SafetyCage):
         predicted_samples_incorrect = np.dot(class_activations_incorrect, beta_hat)
         
         # Fit density estimators
-        density_correct = self._fit_gaussian_mixture(predicted_samples_correct)
-        density_incorrect = self._fit_gaussian_mixture(predicted_samples_incorrect)
+        density_correct = self._fit_gaussian_mixture(predicted_samples_correct, "correct", class_label)
+        density_incorrect = self._fit_gaussian_mixture(predicted_samples_incorrect, "incorrect", class_label)
         
+        # Check if fit_gaussian_mixture failed
+        if density_correct == None or density_incorrect == None:
+            # Assume warning messages and adding to self.unreliable_classes was taken care of in _fit_gaussian_mixture
+            return {
+                "ecdf_correct": None,
+                "ecdf_incorrect": None,
+                "beta_hat": None,
+                "density_correct": None,
+                "density_incorrect": None
+            }
+
         # Compute log PDFs
         pdf_results = self._compute_log_pdfs(density_correct, density_incorrect)
         
@@ -142,8 +177,24 @@ class SPARDACUS(SafetyCage):
         }
 
 
-    def _fit_gaussian_mixture(self, samples: np.ndarray) -> GaussianMixture:
-        """Fit Gaussian Mixture Model using grid search."""
+    def _fit_gaussian_mixture(self, samples: np.ndarray, correctness: str, class_label: str) -> GaussianMixture:
+        """
+        Fit a Gaussian Mixture Model to the given samples using GridSearchCV for hyperparameter tuning.
+
+        Cross val
+        
+        Notes:
+        - Throws an error if there are not enough samples to fit the model, but catches this error and prints a warning instead, returning the best estimator found by GridSearchCV even if it was not properly fitted.
+        """
+        if len(samples) < self.minimum_sample_size:
+            warnings.warn(
+                f"[Gaussian Mixture Model WARNING] There are not enough {correctness} samples in the \"{class_label}\" class to fit a Gaussian Mixture Model. "
+                f"Provided: {len(samples)}. "
+                f"Minimum required: {self.minimum_sample_size}. "
+                f"We recommend that you use a different safetycage method.",
+                UserWarning
+        )
+        
         param_grid = {
             "n_components": range(1, 4),
             "covariance_type": ["full"],
@@ -156,7 +207,43 @@ class SPARDACUS(SafetyCage):
             cv=2
         )
         
-        grid_search.fit(samples.reshape(-1, 1))
+        # Try Catch to catch ValueError thrown by sklearn when all fits fail, ignore sklearn warning when some fits fail
+        try:
+            # If fits fail, sklearn throws a long FitFailedWarning, catch this and let the warning message be provided by the if statement below.
+            with warnings.catch_warnings():
+                from sklearn.exceptions import FitFailedWarning
+                warnings.filterwarnings("ignore", category=FitFailedWarning)
+                warnings.filterwarnings(
+                    "ignore",
+                    message="One or more of the test scores are non-finite:.*",
+                    category=UserWarning,
+                    module="sklearn.model_selection._search"
+                )
+                grid_search.fit(samples.reshape(-1, 1))
+
+        except ValueError as e:
+            warnings.warn(
+                f"[Gaussian Mixture Model WARNING] All GMM fits failed for "
+                f"{correctness} samples in class \"{class_label}\". "
+                f"This class will be flagged as unreliable.",
+                UserWarning
+            )
+            self.unreliable_classes.add(class_label)
+            return None
+
+        # Address the cases where all/some GMM fits fail during CV.
+        scores = grid_search.cv_results_["mean_test_score"]
+
+        if np.isnan(scores).any():
+            warnings.warn(f"[Gaussian Mixture Model WARNING] There are not enough {correctness} samples in the \"{class_label}\" class to fit a Gaussian Mixture Model.")
+
+            if np.all(np.isnan(scores)):
+                # If all scores are NaN .best_estimator_ automatically chooses the first parameter (n_components=1, covariance_type='full').
+                warnings.warn(f"All mean BIC scores are NaN values. Hence, model selection is invalid. The results for the \"{class_label}\" class are unreliable and this class will be flagged as unreliable.")
+                self.unreliable_classes.add(class_label)
+            else:
+                warnings.warn(f"{np.sum(np.isnan(scores))} BIC score(s) are NaN values. Model selection for the \"{class_label}\" class may be unreliable.")
+        
         return grid_search.best_estimator_
 
 
@@ -200,7 +287,11 @@ class SPARDACUS(SafetyCage):
 
 
     def _compute_statistics(self, x, y):
-        
+        """
+        Compute p-values for each sample and layer based on the fitted density estimators and ECDFs.
+
+
+        """
         selected_layers = self.model_module.selected_layers
 
         num_samples = len(y)
@@ -219,6 +310,10 @@ class SPARDACUS(SafetyCage):
         # get activation for all predictions
         
         activations = self.model_module._get_activations(x)
+
+        if self.unreliable_classes:
+            warnings.warn(f"The p-value for the classes {self.unreliable_classes} have been set to NaN due to insufficient data to fit the Gaussian Mixture Models. "
+                        f"Consider using a different safetycage method.")
         
         for layer_index, layer in enumerate(selected_layers): # for all layers
             for sample_index, y_sample, in enumerate(y): # for all predictions to be tested
@@ -229,6 +324,10 @@ class SPARDACUS(SafetyCage):
                 else:
                     class_label = self.classes[y_sample]
                 
+                if class_label in self.unreliable_classes:
+                    pvalue[sample_index,layer_index] = np.NaN
+                    continue
+
                 ## Get the projection vector beta hat and the actication for the sample
                 activation = activations[layer][sample_index]
                 beta_hat = self.layer_params[layer][class_label]["beta_hat"]
@@ -247,7 +346,6 @@ class SPARDACUS(SafetyCage):
                     density_correct.score_samples(activation_projected)
                     )
                 
-                
                 # Get the ECDF functions for the layer
                 ecdf_correct = self.layer_params[layer][class_label]["ecdf_correct"]
                 ecdf_incorrect = self.layer_params[layer][class_label]["ecdf_incorrect"]
@@ -259,7 +357,6 @@ class SPARDACUS(SafetyCage):
                 elif self.s_statistic_source == "incorrectly":
                     # Left-sided test. Small p-value indicates sample is correctly classified.
                     pvalue[sample_index,layer_index] = ecdf_incorrect(statistic)
-
                     
                 # NOTE My implementation:
                 # pvalue_correct = None

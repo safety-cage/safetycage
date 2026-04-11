@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "safetycage_testing"
-version = "0.1.5"
+version = "0.1.7"
 authors = [
   { name="jq11", email="author@example.com" },
 ]
@@ -32,3 +32,14 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/pypa/sampleproject"
 Issues = "https://github.com/pypa/sampleproject/issues"
+
+[tool.uv]
+package = true
+
+[tool.uv.sources]
+safetycage-testing = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "safetycage-testing",
+]
