@@ -49,7 +49,7 @@ class Mahalanobis(SafetyCage):
         if y_pred is None:
             y_pred = self.model_module._get_predictions(x)
         
-        # mahalanobis distance is used to compute the p-value
+        # Mahalanobis distance is used to compute the p-value
 
         if self.model_module.use_onehot_encoder:
             mask = np.argmax(y_pred, axis=1) == np.argmax(y, axis=1)
@@ -205,7 +205,7 @@ class Mahalanobis(SafetyCage):
                     else:
                         pvalue[sample_index, layer_index] = self.two_sided_test(activation, class_label, layer)
 
-        # return p-value
+        # Return p-value
         return(pvalue)
 
 
@@ -221,7 +221,6 @@ class Mahalanobis(SafetyCage):
         inv_var_mean = linalg.solve(variance, activation_centered)
         
         distance = np.matmul(activation_centered.T, inv_var_mean).item()
-        # distance = np.matmul(inv_var_mean.T, activation_centered).item()
         
         result = chi2.sf(distance, df=len(activation))
         
@@ -230,7 +229,7 @@ class Mahalanobis(SafetyCage):
     def t2_statistic(self, activation, class_index, layer):
         # Using exact distribution, the Hotelling's T^2 distribution:
 
-        # number of observations for particular class during training
+        # Number of observations for particular class during training
         n = self.layer_params[layer][class_index]["ECDF"]
         
         # The dimension of the random vector oif layer 
@@ -290,7 +289,7 @@ class Mahalanobis(SafetyCage):
     
     def compute_empirical_distribution(self, class_activations:np.ndarray, empirical:bool, num_observations:int):
 
-        # compute activation statistic moments 
+        # Compute activation statistic moments 
         sample_mean = np.mean(class_activations, axis = 0)
         sample_var = np.cov(class_activations, rowvar=False) if len(class_activations) > 1 else np.zeros_like(class_activations)
 

@@ -28,7 +28,7 @@ def MCC(TP, TN, FP, FN):
     TP, TN, FP, FN are numpy arrays of the same length.
     """
 
-    # 2. Calculate numerator and denominator arrays
+    # Calculate numerator and denominator arrays
     numerator = (TP * TN) - (FP * FN)
     # The four terms of the denominator
     d1, d2, d3, d4 = (TP + FP), (TP + FN), (TN + FP), (TN + FN)

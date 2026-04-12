@@ -87,7 +87,7 @@ class SafetyCage(ABC):
 
             flag = self.flag(y_probs, t)
 
-            # flag is true when misclassification occurs
+            # Flag is true when misclassification occurs
             tps = np.sum(flag & y_true)
             fps = np.sum(flag & (1 - y_true))
             

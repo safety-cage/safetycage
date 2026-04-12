@@ -31,7 +31,7 @@ class SPARDACUS(SafetyCage):
 
         # For the Gaussian Mixture Model fitting. Must be at least 3 based on current implementation (see _fit_gaussian_mixture). Default value is 10.
         if "minimum_sample_size" in kwargs and kwargs["minimum_sample_size"] < 3:
-            raise ValueError(f"minimum_sample_size must be at least 3 based on the current implementation of _fit_gaussian_mixture in SPARDACUS. Provided: {kwargs['minimum_sample_size']}")
+            raise ValueError(f"Minimum_sample_size must be at least 3. Provided: {kwargs['minimum_sample_size']}")
         self.minimum_sample_size = kwargs.get("minimum_sample_size", 10)
 
         self.classes = data_module.classes
@@ -184,7 +184,7 @@ class SPARDACUS(SafetyCage):
         Cross val
         
         Notes:
-        - Throws an error if there are not enough samples to fit the model, but catches this error and prints a warning instead, returning the best estimator found by GridSearchCV even if it was not properly fitted.
+        - Throws an error if there are not enough samples to fit the model, but catches this error and throws a warning instead, returning the best estimator found by GridSearchCV even if it was not properly fitted.
         """
         if len(samples) < self.minimum_sample_size:
             warnings.warn(
@@ -302,12 +302,6 @@ class SPARDACUS(SafetyCage):
             fill_value = np.inf,
             dtype = np.float64
             )
-
-        # NOTE: my implementation
-        # pvalue = {
-        #     layer: None for layer in selected_layers
-        # }
-        # get activation for all predictions
         
         activations = self.model_module._get_activations(x)
 
@@ -339,7 +333,7 @@ class SPARDACUS(SafetyCage):
                 density_correct = self.layer_params[layer][class_label]["density_correct"]
                 density_incorrect = self.layer_params[layer][class_label]["density_incorrect"]
                 
-                # compute the s statistic for the sample
+                # Compute the s statistic for the sample
                 # since -ln(a/b) = ln(b)-ln(a)
                 statistic = np.subtract(
                     density_incorrect.score_samples(activation_projected),
@@ -358,25 +352,6 @@ class SPARDACUS(SafetyCage):
                     # Left-sided test. Small p-value indicates sample is correctly classified.
                     pvalue[sample_index,layer_index] = ecdf_incorrect(statistic)
                     
-                # NOTE My implementation:
-                # pvalue_correct = None
-                # pvalue_incorrect = None
-                
-                # if self.s_statistic_source in ["both", "correctly"]: 
-                #     # Right-sided test. Small p-value indicates sample is incorrectly classfied
-                #     pvalue_correct = 1 - ecdf_correct(statistic)                      
-                    
-                # elif self.s_statistic_source in ["both", "incorrectly"]:
-                #     # Left-sided test. Small p-value indicates sample is correctly classified.
-                #     pvalue_incorrect = 1 - ecdf_incorrect(statistic)                      
-                    
-
-                #     pvalue[sample_index,layer_index] = {
-                #         "correctly": pvalue_correct,
-                #         "incorrectly": pvalue_incorrect
-                #     }
-
-        
         return pvalue
 
 
@@ -425,10 +400,10 @@ class SPARDACUS(SafetyCage):
             
         
         if self.s_statistic_source == "correctly":
-            #if alpha argument to flag() function not none, use this and not the one in config-file
+            # If alpha argument to flag() function not none, use this and not the one in config-file
             flags = (statistics <= alpha)
             
-        #small p-value indicates sample is correctly classified. Make sure flag = 1 means prediction is deemed to be wrong
+        # Small p-value indicates sample is correctly classified. Make sure flag = 1 means prediction is deemed to be wrong
         elif self.s_statistic_source == "incorrectly":
             flags = ~(statistics <= alpha)
 
