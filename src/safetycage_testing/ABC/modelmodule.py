@@ -3,7 +3,18 @@ from typing import Tuple, Union, List, Any, Dict
 import numpy as np
 import omegaconf
 
-class ModelHandler(ABC):
+class ModelModule(ABC):
+    """
+    Abstract base class for handling models used by safety cage methods.
+
+    This class defines a common interface for generating predictions, probabilities,
+    and intermediate activations from a model. It enables safety cage methods to
+    interact with different model types in a consistent way.
+
+    Subclasses must implement methods for prediction, probability estimation, and 
+    activation extraction.
+    """
+
     def __init__(
         self,
         selected_layers:Union[str, List[str]],
@@ -11,7 +22,19 @@ class ModelHandler(ABC):
         model:Any,
         **kwargs
         ):
-        super(ModelHandler, self).__init__()
+        """
+        Initialize the model module.
+
+        Sets configuration parameters for interacting with the model, such as
+        which layers to extract activations from and how outputs are formatted.
+
+        Args:
+            model (Any, optional): Underlying model object. (default: None).
+            selected_layers (list[str], optional): List of layer names used for feature extraction. (default: None).
+            use_onehot_encoder (bool, optional): Whether model outputs are one-hot encoded. (default: False).
+            device (str, optional): Device used for model computation (e.g., "cpu", "cuda"). (default: "cpu").
+        """
+        super(ModelModule, self).__init__()
         
         self.model = model
         self.use_onehot_encoder = use_onehot_encoder
@@ -57,4 +80,4 @@ class ModelHandler(ABC):
     
 if __name__ == '__main__':
     #Quick test to confirm it builds
-    model_handler = ModelHandler()
+    model_module = ModelModule()

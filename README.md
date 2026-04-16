@@ -1,6 +1,26 @@
-# safetycage-pypi (SafetyCage Test Package)
+# safetycage(-pypi) (SafetyCage Test Package)
 
-This is the git repo that hosts the development and testing of the safetycage python package (src and examples & tests respectfully).
+This is the git repo that hosts the development and testing of the safetycage python package (src & tests respectfully).
+
+## Background?
+
+## Description
+Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+
+## Visuals
+- could put a gif on installing and using the package
+
+## Installation
+TBA
+
+## Requirements
+- Python 3.11.7
+
+## Usage
+Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+
+## Support
+Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
 
 ## Integrate with your tools
 
@@ -23,26 +43,6 @@ Use the built-in continuous integration in GitLab.
 * [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
 * [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
 * [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-## Background?
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Visuals
-- could put a gif on installing and using the package
-
-## Installation
-TBA
-
-## Requirements
-- Python 3.11.7
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
 
 ## Roadmap
 If you have ideas for releases in the future, it is a good idea to list them in the README.

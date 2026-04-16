@@ -1,45 +1,69 @@
 import numpy as np
+import json
+import os
 
 import pyrootutils
 pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
 from ..ABC.safetycage import SafetyCage
 
-import json
-import os
-
 class MSP(SafetyCage):
-    def __init__(self, model_handler, data_handler, **kwargs):
-        super(MSP, self).__init__(model_handler, data_handler, **kwargs)
     """
-    Maximum Softmax Probability (MSP) Safety Cage.
+    Maximum Softmax Probability (MSP) Safety Cage Method.
     
     This class implements a simple safety cage based on maximum softmax probability thresholding
     for detecting uncertain predictions in neural network classifiers. The approach flags predictions
-    as potentially incorrect when the maximum softmax probability falls below a specified threshold.
+    as potentially incorrect when the maximum softmax probability falls below a specified threshold. Hence,
+    the method works for any classifier that outputs class probabilities, not just neural networks.
     
-    The method is based on the research presented in:
-    Hendrycks, D., & Gimpel, K. (2016). A Baseline for Detecting Misclassified and 
-    Out-of-Distribution Examples in Neural Networks. arXiv:1610.02136.
+    **Reference:**
+        Hendrycks, D., & Gimpel, K. (2016). A Baseline for Detecting Misclassified and Out-of-Distribution
+        Examples in Neural Networks.
+        https://arxiv.org/abs/1610.02136
     
     Attributes:
-        train_cage_data (tuple): Stores training data (x,y) used to train the safety cage
-        model_handler: Reference to model handler object for making predictions
-    
-    Methods:
-        train_cage: Stores training data for the safety cage
-        predict: Computes statistical metrics on input data
-        _compute_statistics: Calculates maximum softmax probabilities
-        flag: Identifies uncertain predictions based on probability threshold
+        model_module: Reference to model module object for making predictions.
+        data_module: Reference to data module object for handling data.
     """
+
+    def __init__(self, model_module, data_module, **kwargs):
+        """
+        Initialize the MSP safety cage method.
+
+        Args:
+            model_module: Reference to the model module.
+            data_module: Reference to the data module.
+            **kwargs: Additional keyword arguments.
+        """
+        super(MSP, self).__init__(model_module, data_module, **kwargs)
+        self.leq = True
+    
     @property
     def name(self):
+        """Return the name of the safety cage method."""
         return "MSP"
     
     def train_cage(self, x=None, y=None, y_pred=None) -> None:
+        """
+    No training step is required for MSP.
+
+    Args:
+        x: Unused. Included for API consistency.
+        y: Unused. Included for API consistency.
+        y_pred: Unused. Included for API consistency.
+    """
         pass
 
     def predict(self, x, y) -> None:
+        """
+        Compute misclassification detection statistic based on model predictions.
+
+        Args:
+            x (numpy.ndarray): Input data to be processed by the model.
+        
+        Returns:
+            numpy.ndarray: Array of maximum probabilities for each input sample.
+        """
         
         statistics = self._compute_statistics(x)
 
@@ -47,75 +71,25 @@ class MSP(SafetyCage):
     
     def _compute_statistics(self, x):
         """
-        Compute statistical metrics based on model predictions.
-        This method processes input data through the model to get softmax probabilities
+        Compute misclassification detection statistic based on model predictions.
+        This method processes input data through the model to get softmax probabilities.
         and returns the maximum probability for each sample.
+
         Args:
-            x (numpy.ndarray): Input data to be processed by the model
-            y (numpy.ndarray): Target labels (not used in current implementation)
+            x (numpy.ndarray): Input data to be processed by the model.
+            y (numpy.ndarray): Target labels (not used in current implementation).
+        
         Returns:
-            numpy.ndarray: Array of maximum probabilities for each input sample
+            numpy.ndarray: Array of maximum probabilities for each input sample.
         """
         
         # Get softmax probabilities from model
-        probabilities = self.model_handler._get_probabilities(x)
+        probabilities = self.model_module._get_probabilities(x)
         
         # Get maximum probability for each sample
         max_probabilities = np.max(probabilities, axis=1)
         
         return max_probabilities
-
-    def flag(self, statistics: float | np.ndarray, alpha: float | None = None) -> float | np.ndarray:
-        """Flag samples with max probability below alpha as incorrect.
-        This method identifies samples where the maximum probability is below a specified
-        threshold (alpha), marking them as potentially incorrect classifications.
-        Args:
-            statistics (numpy.ndarray): Array of probability values to evaluate
-            alpha (float): Threshold value for flagging samples (0 to 1)
-        Returns:
-            numpy.ndarray: Boolean array where True indicates probabilities below alpha threshold
-        """
-                
-        # Check priority of alpha parameter
-        if alpha is None:
-            # If not provided as input, try to use self.alpha
-            if hasattr(self, 'alpha') and self.alpha is not None:
-                alpha = self.alpha
-            else:
-                # If neither source is available, raise an error
-                raise ValueError("Missing alpha parameter: must be provided as input or set as class attribute")
-            
-        flags = statistics <= alpha
-
-        return flags
-    
-    def save_cage(self,path):
-        """Save the safety cage parameters to a specified path.
-
-        Args:
-            path (str): Path where the safety cage parameters should be saved
-        """
-        if self.alpha:
-            # Create directory if it doesn't exist
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            parameters_path = os.path.join(path, 'parameters.json')
-            # Save alpha parameter to a JSON file
-            with open(parameters_path, 'w') as f:
-                json.dump({'alpha': str(self.alpha)}, f)
-    
-    def load_cage(self, path):
-        """Load the safety cage parameters from a specified path.
-        
-        Args:
-            path (str): Path from where the safety cage parameters should be loaded
-        """
-        if os.path.exists(path):
-            with open(path, 'r') as f:
-                parameters = json.load(f)
-                self.alpha = float(parameters['alpha'])
-        else:
-            raise FileNotFoundError(f"Safety cage parameters file not found at {path}")
-
 
 if __name__ == "__main__":
     MSP(None, None)
