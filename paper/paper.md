@@ -1,67 +1,38 @@
 ---
-title: 'Gala: A Python package for galactic dynamics'
+title: 'Safetycage: A Misclassification Detection Toolkit'
 tags:
   - Python
-  - astronomy
-  - dynamics
-  - galactic dynamics
-  - milky way
+  - Machine learning
+  - Deep learning
+  - Misclassification Detection
+  - AI
 authors:
-  - name: Adrian M. Price-Whelan
-    orcid: 0000-0000-0000-0000
+  - give-names: Finn
+    dropping-particle: Joel
+    surname: Bjervig
+    orcid: 0009-0003-8579-1162
     equal-contrib: true
-    affiliation: "1, 2" # (Multiple affiliations must be quoted)
-  - name: Author Without ORCID
-    equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
+    affiliation: 1
+  - given-name: Julia
+    surname: Qui
+    equal-contrib: true
     affiliation: 2
-  - name: Author with no affiliation
-    corresponding: true # (This is how to denote the corresponding author)
-    affiliation: 3
-  - given-names: Ludwig
-    dropping-particle: van
-    surname: Beethoven
-    affiliation: 3
-affiliations:
- - name: Lyman Spitzer, Jr. Fellow, Princeton University, United States
-   index: 1
-   ror: 00hx57361
- - name: Institution Name, Country
-   index: 2
- - name: Independent Researcher, Country
-   index: 3
-date: 13 August 2017
-bibliography: paper.bib
 
-# Optional fields if submitting to a AAS journal too, see this blog post:
-# https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
-aas-doi: 10.3847/xxxxx <- update this with the DOI from AAS once you know it.
-aas-journal: Astrophysical Journal <- The name of the AAS journal.
+affiliations:
+ - name: SINTEF AS, Norway
+   index: 1
+ - name: Waterloo University, Canada
+   index: 2
+
+date: 06 March 2026
+bibliography: paper.bib
 ---
 
 # Summary
 
-The forces on stars, galaxies, and dark matter under external gravitational
-fields lead to the dynamical evolution of structures in the universe. The orbits
-of these bodies are therefore key to understanding the formation, history, and
-future state of galaxies. The field of "galactic dynamics," which aims to model
-the gravitating components of galaxies to study their structure and evolution,
-is now well-established, commonly taught, and frequently used in astronomy.
-Aside from toy problems and demonstrations, the majority of problems require
-efficient numerical tools, many of which require the same base code (e.g., for
-performing numerical orbit integration).
 
 # Statement of need
-
-`Gala` is an Astropy-affiliated Python package for galactic dynamics. Python
-enables wrapping low-level languages (e.g., C) for speed without losing
-flexibility or ease-of-use in the user-interface. The API for `Gala` was
-designed to provide a class-based and user-friendly interface to fast (C or
-Cython-optimized) implementations of common operations such as gravitational
-potential and force evaluation, orbit integration, dynamical transformations,
-and chaos indicators for nonlinear dynamics. `Gala` also relies heavily on and
-interfaces well with the implementations of physical units and astronomical
-coordinate systems in the `Astropy` package [@astropy] (`astropy.units` and
-`astropy.coordinates`).
+`Safetycage` is an package that brings several misclassification detection methods (MDM) under the same framework. The design of safetycage provides a class-based and user-friendly interface with implementations of MDMs such as MSP, and SPARDACUS among others. To provide a fully functioning and general ecosystem for MDM, `Safetycage` relies on model -and datamodules that are wrappers of the model and data choices made by the user. They will need to define some functions such as prediction call syntax, data splits. This way the MDMs are agnostic to model and data, with the caveat that todays implementation currently focuses on classifiers. 
 
 `Gala` was designed to be used by both astronomical researchers and by
 students in courses on gravitational dynamics or astronomy. It has already been
@@ -72,32 +43,15 @@ design, and support for Astropy functionality in `Gala` will enable exciting
 scientific explorations of forthcoming data releases from the *Gaia* mission
 [@gaia] by students and experts alike.
 
-# State of the field                                                                                                                  
+# State of the field
 
-Several tools exist for galactic dynamics computations:                                                     
-`galpy` [@HendrycksG16c] is a Python package with similar goals,
-providing orbit integration and potential classes for galactic dynamics.                                                              
-`NEMO` [@Teuben:1995] is a well-established, comprehensive stellar dynamics                                                           
-toolbox written primarily in C, offering extensive functionality but with a                                                           
-steeper learning curve and less integration with modern Python workflows.                                                             
-Other tools like `GalPot` provide specific Milky Way potential models but lack                                                        
-the broader dynamical analysis capabilities.                                                                                          
-                                                                                                                                        
-`Gala` was built rather than contributing to existing projects for several                                                            
-reasons. First, `Gala` was designed from the ground up to integrate seamlessly                                                        
-with the Astropy ecosystem, using `astropy.units` and `astropy.coordinates`                                                           
-as core dependencies rather than optional features. This tight integration                                                            
-enables natural workflows for astronomers already using Astropy. Second,                                                              
-`Gala`'s object-oriented API with consistent interfaces across subpackages                                                            
-(potentials, integrators, dynamics) provides a more modular and extensible                                                            
-design than alternatives available at the time. Third, `Gala` fills a specific                                                        
-niche between simple demonstration codes and full N-body simulation packages                                                          
-like `Gadget` [@Springel:2005] – it focuses on the common tasks in galactic                                                             
-dynamics research (orbit integration, potential evaluation, coordinate                                                                
-transformations) while maintaining both performance through C implementations                                                         
-and usability through its Python interface.  
+Several software packages address related aspects of model reliability and data integrity. Libraries such as Cleanlab [@cleanlab] focus primarily on identifying label errors within the training set using confident learning. While effective for dataset curation, it is not focused on detection of misclassifications during inference on novel data. PyTorch-OOD [@pytorch_ood] provides a suite of Out-of-Distribution (OOD) detection methods but is restricted to the PyTorch ecosystem. Safetycage provides similar capabilities but remains framework-agnostic through its data -and model modules, making it easy for users to pass their own classifier and data modalities. Deepchecks [@deepchecks] and Microsoft’s Responsible AI Toolbox [@responsible_ai] offer comprehensive suites for model auditing and integrity checks. However, these are often designed for "at-rest" model evaluation rather than providing a lightweight, extensible API specifically for implementing and testing new misclassification detection algorithms. Packages like NetCal[@netcal] and Scores [@scores] focus on calibrating probability outputs. While calibration is a form of error mitigation, Safetycage focuses on the explicit identification of individual samples likely to be misclassified.
+
+By providing a unified abstraction layer, Safetycage bridges the gap between specialized OOD detection tools and general-purpose model auditing frameworks.
 
 # Software design
+
+modules `safetycage.datamodule` and `safetycage.modelmodule`
 
 `Gala`'s design philosophy is based on three core principles: (1) to provide a
 user-friendly, modular, object-oriented API, (2) to use community tools and
@@ -148,20 +102,66 @@ core community infrastructure for galactic dynamics research.
 
 # Mathematics
 
-Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
+Let $\mathcal{D}_{\mathrm{train}}=\{(x_i,y_i)\}_{i=1}^{n}$ denote the training set. We first use $\mathcal{D}_{\mathrm{train}}$ to fit the predictive model $f_\theta$. For misclassification detection, methods that require parameter fitting (e.g., fitting score functions, class statistics, or calibration maps) are also trained on training data.
 
-Double dollars make self-standing equations:
+Further, let $\hat y_i=f_\theta(x_i)$ be the model prediction for sample $i$. Define the true misclassification indicator as $m_i=\mathbf{1}\{\hat y_i\neq y_i\}$. Let $s_i=s_\phi(x_i)\in\mathbb{R}$ be the detector score, and define the thresholded detector decision as $\hat m_i(\alpha)=\mathbf{1}\{s_i\ge\alpha\}$. We will define how to find the optimal threshold $\alpha$ later.
 
-$$\Theta(x) = \left\{\begin{array}{l}
-0\textrm{ if } x < 0\cr
-1\textrm{ else}
-\end{array}\right.$$
+Building on the formulation where a predicted misclassification is flagged when a detection score $s_i$ exceeds a threshold $\alpha$, the specific methods implemented in `Safetycage` define their respective scoring functions as follows.
 
-You can also use plain \LaTeX for equations
-\begin{equation}\label{eq:fourier}
-\hat f(\omega) = \int_{-\infty}^{\infty} f(x) e^{i\omega x} dx
-\end{equation}
-and refer to \autoref{eq:fourier} from text.
+### Maximum Softmax Probability (MSP)
+MSP uses the classifier's softmax confidence, where low confidence indicates higher risk of misclassification. In our framework, this is mapped to a score where larger values indicate higher error likelihood, and thresholding produces the detection decision [@msp_placeholder].
+
+### DOCTOR
+DOCTOR estimates a rejection rule by contrasting the distributions of correctly and incorrectly classified samples. Samples that are more likely under the misclassified distribution receive higher scores and are flagged when the score exceeds the threshold [@doctor_placeholder].
+
+### Mahalanobis Safetycage
+The Mahalanobis method measures how far an input's internal representation is from reference class-conditional activation statistics. Larger distances indicate more atypical behavior and therefore higher misclassification risk [@mahalanobis_placeholder].
+
+### SPARDACUS Safetycage
+SPARDACUS learns a projection that emphasizes differences between correctly and incorrectly classified activation distributions, then derives a statistical significance score from that separation. Predictions with stronger evidence of mismatch are assigned higher misclassification scores [@spardacus_placeholder].
+
+
+### Finding the Optimal Decision Threshold
+Given any method-specific score $s_i$, threshold selection is performed on a validation set by treating misclassification detection as a binary decision problem: for each candidate $\alpha$, samples are either flagged ($\hat m_i(\alpha)=1$) or not flagged ($\hat m_i(\alpha)=0$). The optimal threshold is then the one that maximizes a chosen performance metric computed from this induced confusion matrix.
+
+For compact notation, all confusion-matrix terms and derived metrics below are understood to depend on the threshold $\alpha$.
+
+$$
+\alpha^{\star}
+=
+\arg\max_{\alpha\in\mathbb{R}}
+J(\alpha),
+\quad
+J(\alpha) = \mathcal{M}\!\left(\mathrm{TP},\mathrm{FP},\mathrm{TN},\mathrm{FN}\right),
+$$
+
+$$
+\begin{aligned}
+\mathrm{TP} &= \sum_{i=1}^n \mathbf{1}\{\hat m_i(\alpha)=1,\ m_i=1\},\\
+\mathrm{FP} &= \sum_{i=1}^n \mathbf{1}\{\hat m_i(\alpha)=1,\ m_i=0\},\\
+\mathrm{TN} &= \sum_{i=1}^n \mathbf{1}\{\hat m_i(\alpha)=0,\ m_i=0\},\\
+\mathrm{FN} &= \sum_{i=1}^n \mathbf{1}\{\hat m_i(\alpha)=0,\ m_i=1\}.
+\end{aligned}
+$$
+
+These quantities have the standard interpretation in our setting: $\mathrm{TP}$ counts truly misclassified samples that are correctly flagged, $\mathrm{TN}$ counts correctly classified samples that are correctly not flagged, while $\mathrm{FP}$ and $\mathrm{FN}$ count the two error types of the detector. Thus, optimizing $\alpha$ amounts to selecting the operating point that best balances these outcomes under the selected metric.
+
+Here, $\mathcal{M}(\cdot)$ is an arbitrary scalar metric on the induced confusion matrix. In the SafetyCage papers, the recommended choice is the Matthews Correlation Coefficient (MCC):
+
+$$
+\mathcal{M}_{\mathrm{MCC}}=
+\frac{\mathrm{TP}\,\mathrm{TN}-\mathrm{FP}\,\mathrm{FN}}
+{\sqrt{\big(\mathrm{TP}+\mathrm{FP}\big)
+\big(\mathrm{TP}+\mathrm{FN}\big)
+\big(\mathrm{TN}+\mathrm{FP}\big)
+\big(\mathrm{TN}+\mathrm{FN}\big)}}.
+$$
+
+In practice, because $J(\alpha)$ is piecewise constant in $\alpha$, it is sufficient to evaluate candidate thresholds on the sorted unique validation scores (or their midpoints) and select the maximizer. Equivalently, one may sort the validation scores, sweep $\alpha$ across this ordered list, compute $J(\alpha)$ at each step, and return the best threshold.
+
+
+# Future work
+Future work may include regression tasks, where a misclassification is defined as a prediction is a distance $d$ away from the ground truth.
 
 # Citations
 
@@ -188,12 +188,11 @@ Figure sizes can be customized by adding an optional second parameter:
 
 # AI usage disclosure
 
-No generative AI tools were used in the development of this software, the writing
-of this manuscript, or the preparation of supporting materials.
+Generative AI tools were used to create some of the docstrings and documentation of this software. All generated material has been verified by us.
 
 # Acknowledgements
+We acknowledge contributions from Pål Johnsen and Filippo Remonato for developing two new misclassification methods, namely Mahalanobis, and SPARDACUS.
 
-We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong
-Oh, and support from Kathryn Johnston during the genesis of this project.
+EXAIGON THEMIS and SINTEF internal proejcts ?  NFR.
 
 # References
