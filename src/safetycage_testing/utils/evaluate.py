@@ -7,23 +7,29 @@ from sklearn import metrics
 from ..ABC.safetycage import SafetyCage
 
 def precision(TP, TN, FP, FN):
+    """Compute precision (positive predictive value) from confusion matrix components."""
     denom = TP + FP
     return np.divide(TP, denom, out=np.zeros_like(TP, dtype=float), where=denom > 0)
 
 def recall(TP, TN, FP, FN):
+    """Compute recall (sensitivity) from confusion matrix components."""
     denom = TP + FN
     return np.divide(TP, denom, out=np.zeros_like(TP, dtype=float), where=denom > 0)
 
 def specificity(TP, TN, FP, FN):
+    """Compute specificity (true negative rate) from confusion matrix components."""
     denom = TN + FP
     return np.divide(TN, denom, out=np.zeros_like(TN, dtype=float), where=denom > 0)
 
 def NPV(TP, TN, FP, FN):
+    """Compute negative predictive value (NPV) from confusion matrix components."""
     denom = TN + FN
     return np.divide(TN, denom, out=np.zeros_like(TN, dtype=float), where=denom > 0)
 
 def MCC(TP, TN, FP, FN):
     """
+    Compute Matthews Correlation Coefficient (MCC) from confusion matrix components.
+
     Vectorized version of MCC calculation.
     TP, TN, FP, FN are numpy arrays of the same length.
     """
@@ -44,6 +50,7 @@ def MCC(TP, TN, FP, FN):
     return mcc
 
 def accuracy(TP, TN, FP, FN):
+    """Compute accuracy from confusion matrix components."""
 
     numerator = TP + TN
     denom = TP + TN + FP + FN
@@ -51,6 +58,7 @@ def accuracy(TP, TN, FP, FN):
     return np.divide(numerator, denom, out=np.zeros_like(TN, dtype=float), where=denom > 0)
 
 def f1_score(TP, TN, FP, FN):
+    """Compute F1-score from confusion matrix components."""
     p = precision(TP, TN, FP, FN)
     r = recall(TP, TN, FP, FN)
 
@@ -71,9 +79,13 @@ metric_functions = {
 
 def calculate_auroc(safetycage:SafetyCage, y_true: np.ndarray, y_scores: np.ndarray) -> float:
     """
-    Calculate the Area Under the ROC Curve (AUROC) manually using the safety cage.
-    
+    Calculate the Area Under the ROC Curve (AUROC) manually using the safety cage flag function.
+
+    This method evaluates the safety cage across all unique score thresholds and
+    computes the AUROC using the trapezoidal rule.
+
     Args:
+    safetycage (SafetyCage): Safety cage used to flag samples.
         y_true (np.ndarray): True binary labels (incorrect predictions).
         y_scores (np.ndarray): Statistics/scores from the classifier.
         
@@ -124,16 +136,19 @@ def calculate_auroc(safetycage:SafetyCage, y_true: np.ndarray, y_scores: np.ndar
 
 def calculate_confusion_rates(y:np.ndarray,y_pred:np.ndarray):
     """
-    For misclassification y is incorrect predictions,
-    and predicted misclassifications is y_pred
+    Compute confusion matrix counts for misclassification detection.
+
+    y represents the true misclassification labels and y_pred represents the predicted 
+    misclassification labels.
 
     Args:
-        y (np.ndarray): ground truth labels
-        y_pred (np.ndarray): predicted labels
+        y (numpy.ndarray): Ground truth labels.
+        y_pred (numpy.ndarray): Predicted labels.
 
     Returns:
-        dict: true and false rates for positive and negative predictions
+        dict: Dictionary containing TP, TN, FP, and FN counts.
     """
+
     return {
         "TP": np.sum((y == 1) & (y_pred == 1)).item(),
         "TN": np.sum((y == 0) & (y_pred == 0)).item(),
@@ -145,14 +160,23 @@ def calculate_confusion_rates(y:np.ndarray,y_pred:np.ndarray):
 def calculate_metrics(
     y: np.ndarray,
     y_pred: np.ndarray,
-    metric_functions: Dict[str, callable] = metric_functions
-):
+    metric_functions: Dict[str, callable] = metric_functions):
     """
-    For misclassification y is incorrect predictions,
-    and predicted misclassifications is y_pred
+    Calculate evaluation metrics from true and predicted misclassification labels.
+
+    This method computes confusion matrix components and applies each metric function
+    in the given dictionary.
+
+    y represents the true misclassification labels and y_pred represents the predicted 
+    misclassification labels.
+
     Args:
-        y (np.ndarray): ground truth labels
-        y_pred (np.ndarray): predicted labels
+        y (numpy.ndarray): Ground truth labels.
+        y_pred (numpy.ndarray): Predicted labels.
+        metric_functions (dict, optional): Dictionary of metric functions. (default: metric_functions).
+
+    Returns:
+        dict: Dictionary mapping metric names to metric values.
     """
     
     confusion_rates = calculate_confusion_rates(
@@ -169,12 +193,23 @@ def calculate_metrics(
 
 def find_best_threshold(y_true, y_probs, metric_fn, greater_is_better=True, leq=True):
     """
-    Find thresholds that maximize a given metric.
+    Find the threshold that optimizes a given metric.
+
+    This method evaluates all distinct thresholds in the score vector and returns
+    the threshold that gives the best metric value.
 
     Args:
-        greater_is_better (bool): the greater the metric value, the better it is
-        leq (bool) i.e. "less than or equal to":  Whether we are looking for smaller (ex. MSP) or larger (ex. DOCTOR) probabilities.
+        y_true (numpy.ndarray): True binary misclassification labels.
+        y_probs (numpy.ndarray): Statistics or probabilities to threshold.
+        metric_fn (callable): Metric function to optimize.
+        greater_is_better (bool, optional): Whether larger metric values are better. (default: True).
+        leq (bool, optional):  Whether we are looking for smaller (ex. MSP) 
+            or larger (ex. DOCTOR) probabilities (i.e. "less than or equal to").
+
+    Returns:
+        dict: Threshold values, metric values, best threshold, best metric, and metric name.
     """
+
     # 1. Sort probabilities in ASCENDING order (because lower = more likely to flag)
     asc_indices = np.argsort(y_probs)
 
@@ -217,17 +252,18 @@ def find_best_threshold(y_true, y_probs, metric_fn, greater_is_better=True, leq=
 def calculate_negative_metric(alpha:float, metric_fn, statistics:np.ndarray, safecage:SafetyCage, incorrect_predictions:np.ndarray):
     """
     Calculates the negative metric value for use in optimization to find the optimal threshold alpha.
+
     The function is negated because optimization algorithms typically minimize rather than maximize.
 
     Args:
-        alpha (float): Threshold parameter used for the statistics
-        metric_fn: Function to calculate the metric to optimize
-        statistics (np.ndarray): Statistics of whether a prediction was correct or incorrect
-        safecage (SafetyCage): SafetyCage object
-        incorrect_predictions (np.ndarray): Ground truth of whether a prediction was correct or incorrect
+        alpha (float): Threshold parameter used for the flagging statistics.
+        metric_fn (callable): Function to calculate the metric to optimize.
+        statistics (numpy.ndarray): Statistics of whether a prediction was correct or incorrect.
+        safecage (SafetyCage): SafetyCage object.
+        incorrect_predictions (numpy.ndarray): Ground truth of whether a prediction was correct or incorrect.
 
     Returns:
-        float: Negative metric value for optimization
+        float: Negative metric value for optimization.
     """
     try:
         # Get predictions from safety cage
@@ -251,23 +287,22 @@ def calculate_negative_metric(alpha:float, metric_fn, statistics:np.ndarray, saf
         return 1e6  # A large value to ensure this alpha is not chosen
 
 
-
-
 def calculate_roc_curve(safetycage: SafetyCage, y_true: np.ndarray, statistics: np.ndarray, num_thresholds: int = 1e3, threshold_min: int = 0, threshold_max: int = 1) -> tuple:
     """
     Calculate the ROC curve data points using the SafetyCage's own flag function.
+
     This handles different flag implementations across various SafetyCage implementations.
     
     Args:
-        safetycage (SafetyCage): The SafetyCage instance to use for flagging
-        y_true (np.ndarray): True binary labels (incorrect predictions)
-        statistics (np.ndarray): Statistics/scores computed from the SafetyCage
-        num_thresholds (int, optional): Number of threshold points to use. Defaults to 100.
-        threshold_min (int, optional): Minimum threshold value. Defaults to 0.
-        threshold_max (int, optional): Maximum threshold value. Defaults to 1.
+        safetycage (SafetyCage): The SafetyCage instance to use for flagging.
+        y_true (np.ndarray): True binary labels (incorrect predictions).
+        statistics (np.ndarray): Statistics/scores computed from the SafetyCage.
+        num_thresholds (int, optional): Number of threshold points to use. (default: 100).
+        threshold_min (int, optional): Minimum threshold value. (default: 0).
+        threshold_max (int, optional): Maximum threshold value. (default: 1).
         
     Returns:
-        tuple: A tuple containing (fpr, tpr, thresholds)
+        dict: A dictionary containing (fpr, tpr, thresholds)
             - fpr (np.ndarray): False positive rates
             - tpr (np.ndarray): True positive rates
             - thresholds (np.ndarray): Threshold values used

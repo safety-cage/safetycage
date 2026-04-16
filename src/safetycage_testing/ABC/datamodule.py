@@ -3,7 +3,15 @@ from typing import List, Any
 from pathlib import Path
 
 class DataModule(ABC):
-    """Abstract base class for handling batched data regardless of source"""
+    """
+    Abstract base class for handling batched data regardless of source.
+
+    This class defines a common interface for loading, transforming, and splitting
+    data for the use by safety cage methods and model modules. It also provides 
+    access to dataset properties such as the class labels and dataset size.
+
+    Subclasses must implement methods for data loading, preprocessing, and splitting.
+    """
     
     def __init__(
         self,
@@ -12,6 +20,20 @@ class DataModule(ABC):
         batch_size: int = 32,
         device:str="cpu"
         ) -> None:
+        """
+        Initialize the data module.
+
+        Sets configuration parameters for loading and processing data, such as
+        caching behavior, batch size, and device placement.
+        
+        The data directory is created if it does not already exist.
+
+        Args:
+            data_dir (str, optional): Path to the data directory. (default: None).
+            from_cache (bool, optional): Whether to load data from cached files. (default: False).
+            batch_size (int, optional): Number of samples per batch. (default: 32)
+            device (str, optional): Device used for data processing (e.g., "cpu", "cuda") (default: "cpu"). 
+        """
 
         # Data parameters
         self.from_cache = from_cache

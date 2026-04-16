@@ -4,11 +4,13 @@ build-backend = "uv_build"
 
 [project]
 name = "safetycage_testing"
-version = "0.1.8"
+version = "0.1.9"
 authors = [
-  { name="jq11", email="author@example.com" },
+    { name="Pål Vegard Bun Johnsen", email="pal.johnsen@sintef.no" },
+    { name="Joel Bjervig", email="Joel.Bjervig@sintef.no" },
+    { name="Julia Qiu", email="Julia.Qiu@sintef.no" },
 ]
-description = "The package building up to the official safetycage package"
+description = "The official safety cage package for misclassification detection in predictive models."
 readme = "README.md"
 requires-python = "==3.11.7"
 classifiers = [
@@ -30,8 +32,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/pypa/sampleproject"
-Issues = "https://github.com/pypa/sampleproject/issues"
+Homepage = "https://github.com/safety-cage/safetycage"
+Issues = "https://github.com/safety-cage/safetycage/issues"
 
 [tool.uv]
 package = true

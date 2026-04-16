@@ -17,11 +17,62 @@ pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
 class SPARDACUS(SafetyCage):
     """
-    SPARDACUS is a safety cage method that combines the fastSPARDA algorithm for dimensionality reduction with Gaussian Mixture Models for density estimation, and uses ECDFs to compute p-values for safety testing. The method allows for flexible configuration of the source of the S statistic, the method for combining p-values across layers, and the parameters for fitting the Gaussian Mixture Models.   
-    
-    SPARDACUS can not be used for non-neural network models, ... 
+    SPARDACUS Safety Cage Method.
+
+    The SPARDACUS safety cage detects misclassified samples by comparing how a sample’s 
+    internal neural network activations differ from correctly and incorrectly classified 
+    training samples.
+
+    The method models this by learning a projection that separates correct and 
+    incorrect activations for each class and layer. During prediction after training,
+    it projects a sample’s activation and evaluates how likely it is under both the 
+    correct and incorrect distributions. This comparison is then converted into a 
+    p-value using fitted density estimators and ECDFs on the likelihood values.
+
+    The smaller the p-value, the more likely the sample is to be misclassified. When 
+    multiple layers are used, a global p-value is found by combining the each layer's 
+    p-value using either Fisher’s method or the Cauchy combination test. The optimal 
+    threshold to compare the resulting p-values is given to the alpha attribute.
+
+    NOTE: This method **only works for neural network models**, as it relies
+    on intermediate layer activations and learned representations.
+
+    See the below research paper for a thorough explanation of the SPARDACUS method.
+
+    **Reference:**
+        P. V. Johnsen and F. Remonato. “SPARDACUS SafetyCage: A new misclassification detector”.
+        https://openreview.net/forum?id=3FswRo4Lhj#discussion
+
+    Attributes:
+        model_module: Reference to model module object for making predictions.
+        data_module: Reference to data module object for handling data.
+        classes (dict): Mapping of class indices to class labels.
+        layer_params (dict): Stores parameters including such as projection vectors, density 
+        estimators, and ECDFs for each layer and class from training.
+        unreliable_classes (set): Set of class labels for which density estimation
+            failed or was unreliable due to insufficient amount of correct/incorrect predictions.
+
+        s_statistic_source (str): Determines which distribution is used to
+            compute p-values ("correctly" or "incorrectly").
+        alpha (float | None): Significance threshold used for flagging.
+        cauchy_weights_per_layer (list): Weights used for Cauchy combination test.
+        test_type_between_layers (str): Method for combining p-values across layers.
+        minimum_sample_size (int): Minimum number of samples required to fit
+            Gaussian Mixture Models.
     """
     def __init__(self, model_module, data_module, **kwargs):
+        """
+        Initialize the SPARDACUS safety cage.
+
+        Args:
+            model_module: Reference to model module object for making predictions.
+            data_module: Reference to data module object for handling data.
+            s_statistic_source (str): Source used to compute p-values ("correctly" or "incorrectly").
+            alpha (float): Significance threshold for flagging samples.
+            test_type_between_layers (str): Method for combining p-values ("fisher" or "cauchy").
+            cauchy_weights_per_layer (list[float]): Weights for the Cauchy combination test.
+            minimum_sample_size (int, optional): Minimum number of samples required to fit density models. (default: 10)
+        """
         super(SPARDACUS, self).__init__(model_module, data_module, **kwargs)
 
         self.s_statistic_source = kwargs.get("s_statistic_source")
@@ -36,17 +87,24 @@ class SPARDACUS(SafetyCage):
 
         self.classes = data_module.classes
         self.unreliable_classes = set()
+    
     @property
     def name(self):
+        """Return the name of the safety cage method."""
         return "SPARDACUS"
 
     def train_cage(self, x=None, y=None, y_pred=None) -> None:
         """
-        Train the spardacus safetycage  using correct and incorrect predictions.
+        Train the SPARDACUS safety cage.
+
+        Separates training samples into correctly and incorrectly classified groups and
+        computes parameters for each layer and class, which are later used to evaluate 
+        new samples during prediction.
 
         Args:
             x: Tuple of (x_correct, x_incorrect) input data
             y: Tuple of (y_correct, y_incorrect) labels
+            y_pred: Model predictions
         """
         
         if x is None:
@@ -103,7 +161,13 @@ class SPARDACUS(SafetyCage):
 
     def _get_class_activations(self, layer_activations: dict, layer: str, 
                             y_data: np.ndarray, class_index: int) -> np.ndarray:
-        """Extract class-specific activations based on labels."""
+        """
+        Extract activations for a specific class (given by class_index) at a given layer.
+        Supports both one-hot encoded and integer labels.
+
+        Returns:
+            numpy.ndarray: Activations for the specified class and layer
+        """
         if self.model_module.use_onehot_encoder:
             return layer_activations[layer][y_data[:, class_index] == 1, :]
         
@@ -111,7 +175,20 @@ class SPARDACUS(SafetyCage):
 
 
     def _process_layer_class(self, class_activations_correct: np.ndarray, class_activations_incorrect: np.ndarray, class_label: str) -> dict:
-        """Process activations for a single layer and class."""
+        """
+        Process activations for a single layer and class.
+
+        Learns a projection that separates correctly and incorrectly classified samples,
+        fits density models to the projected values, and prepares statistics used to compute p-values.
+
+        Args:
+            class_activations_correct (numpy.ndarray): Activations of correctly classified samples
+            class_activations_incorrect (numpy.ndarray): Activations of incorrectly classified samples
+            class_label (str): Class label
+
+        Returns:
+            dict: Dictionary containing projection vectors, density models, and ECDFs for the class and layer
+        """
         # Double check if both class_activations_correct and class_activations_incorrect have a positive number of values
         if len(class_activations_incorrect) == 0 or len(class_activations_correct) == 0:
             warnings.warn(f"No incorrect and/or correct samples for class \"{class_label}\" exist in layer activations. This class will be flagged as unreliable and the results "
@@ -179,13 +256,44 @@ class SPARDACUS(SafetyCage):
 
     def _fit_gaussian_mixture(self, samples: np.ndarray, correctness: str, class_label: str) -> GaussianMixture:
         """
-        Fit a Gaussian Mixture Model to the given samples using GridSearchCV for hyperparameter tuning.
-
-        Cross val
-        
         Notes:
         - Throws an error if there are not enough samples to fit the model, but catches this error and throws a warning instead, returning the best estimator found by GridSearchCV even if it was not properly fitted.
+
+        Fit a Gaussian Mixture Model to the given samples using GridSearchCV for hyperparameter tuning. 
+        Use cross-validation with 2-fold CV to select the number of components (1-3) and takes the BIC
+        average score of all folds to select the best model. 
+        
+        **WARNING:** In cases where there are too few samples (often by too few incorrect samples for 
+        well-performing models), the Gaussian Mixture Model may fail to fit properly (since it does not 
+        make sense to fit a gaussian to too few samples). In such cases, we recommend using a different 
+        safetycage method or ensuring enough incorrect and incorrect samples exist for each class.
+
+        For most warning cases the error/warning will be handled below, and a clear warning statement is 
+        sent to output. In cases where there are many warnings, it is often a result of sklearn's 
+        GridSearchCV struggling to fit.
+
+        Consider the following warning cases:
+            - The provided number of samples is less than or minimum_sample_size (which itself has a minimum
+            value of 3 since we consider at most 3 components).
+            - All Gaussian fits fail (all 6, since there are 3 components to try and 2-fold CV). This is 
+            captured as an error and throws a warning. Gaussian fitting does not occur, the given class
+            is saved to self.unreliable_classes, and the method returns None.
+            - Not all fits failed, but all BIC scores are NaN values (meaning for all component options, 
+            at least 1 NaN value occured in the 2-fold CV). The given class is saved to self.unreliable_classes.
+            It returns the best estimator found by GridSearchCV, but the found parameter is simply the first one
+            available.
+            - Not all fits failed, but some BIC scores are NaN values. A warning is thrown that model selection 
+            may be unreliable, but the best estimator found by GridSearchCV is returned.
+
+        Args:
+            samples (numpy.ndarray): Projected samples
+            correctness (str): whethering we are fitting predictions that were "correct" or "incorrect"
+            class_label (str): Class label
+
+        Returns:
+            GaussianMixture | None: Fitted model or None if fitting failed
         """
+
         if len(samples) < self.minimum_sample_size:
             warnings.warn(
                 f"[Gaussian Mixture Model WARNING] There are not enough {correctness} samples in the \"{class_label}\" class to fit a Gaussian Mixture Model. "
@@ -248,8 +356,18 @@ class SPARDACUS(SafetyCage):
 
 
     def _compute_log_pdfs(self, density_correct: GaussianMixture, density_incorrect: GaussianMixture, n_samples: int = int(1e6)) -> dict:
-        
-        """Compute log PDFs for correct and incorrect samples."""
+        """
+        Compute log-likelihood values for correct and incorrect distributions.
+
+        Args:
+            density_correct (GaussianMixture): Model for correct samples
+            density_incorrect (GaussianMixture): Model for incorrect samples
+            n_samples (int): Number of samples to draw
+
+        Returns:
+            dict: Sampled points log-likelihood values
+        """
+
         samples_correct = density_correct.sample(n_samples)[0]
         samples_incorrect = density_incorrect.sample(n_samples)[0]
         
@@ -271,16 +389,18 @@ class SPARDACUS(SafetyCage):
     def predict(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
         """
         Tests cage on given data.
+
+        Computes per-layer p-values for each sample and combines them into a global
+        p-value using the configured method.
         
         Args:
             x: Input features array
             y: Target values array
             
         Returns:
-            np.ndarray: Combined p-values. Shape depends on s_statistic_source:
-                        vector of global p-values per sample
+            np.ndarray: Vector of global combined p-values per sample. Shape depends on s_statistic_source.
         """
-        
+
         pvalue = self._compute_statistics(x, y)
         
         return self._combine_layer_pvalues(pvalue, len(y), self.test_type_between_layers)
@@ -290,7 +410,15 @@ class SPARDACUS(SafetyCage):
         """
         Compute p-values for each sample and layer based on the fitted density estimators and ECDFs.
 
+        Evaluates how likely each sample is under the correct and incorrect distributions.
+        Samples belonging to unreliable classes are assigned NaN values.
 
+        Args:
+            x: Input data samples
+            y: True labels
+
+        Returns:
+            numpy.ndarray: Matrix of p-values with shape (num_samples, num_layers)
         """
         selected_layers = self.model_module.selected_layers
 
@@ -356,9 +484,22 @@ class SPARDACUS(SafetyCage):
 
 
     def _combine_layer_pvalues(self, pvalues: np.ndarray, y_len: int, test_type: str | None = None) -> np.ndarray:
-        """Combine p-values across layers using the specified method."""
+        """
+        Combine p-values across layers into a global p-value using one of the specified methods:
+        - Fisher’s method
+        - the Cauchy combination test
+
+        If just one layer of p-values is given, the function simply returns the p-values for that layer.?
+
+        Args:
+            pvalues (numpy.ndarray): Per-layer p-values
+            y_len (int): Number of samples
+            test_type (str): Combination method
+
+        Returns:
+            numpy.ndarray: Combined p-values per sample
+        """
         num_layers = pvalues.shape[1]
-        
             
         if test_type is None and num_layers > 1:
             raise ValueError("test_type_between_layers cannot be None when combining p-values between several layers")
@@ -388,7 +529,17 @@ class SPARDACUS(SafetyCage):
 
 
     def flag(self, statistics, alpha=None):
-        
+        """
+        Flag samples with probability less than or equal (self.s_statistic_source == "correctly") to alpha 
+        or probability more than or equal (self.s_statistic_source == "incorrectly") to alpha as incorrect.
+
+        Args:
+            statistics (numpy.ndarray): Computed p-values
+            alpha (float): Threshold for flagging samples
+
+        Returns:
+            numpy.ndarray: Boolean array indicating flagged samples
+        """
         # Check priority of alpha parameter
         if alpha is None:
             # If not provided as input, try to use self.alpha

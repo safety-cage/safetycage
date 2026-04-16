@@ -3,6 +3,19 @@ import numpy as np
 from scipy.stats import cauchy, multivariate_normal
 
 def CauchyCombinationTest(p_values, weights=None):
+    """
+    Combine p-values using the Cauchy combination test.
+
+    This method combines multiple p-values into a single global p-value.
+    If no weights are provided, all p-values are given equal weight.
+
+    Args:
+        p_values (numpy.ndarray): P-values to combine.
+        weights (numpy.ndarray, optional): Weights for each p-value. (default: None).
+
+    Returns:
+        float: Combined p-value.
+    """
 
     # If weights is None, put equal weight to each p-value:
     if weights is None or weights == []:
@@ -21,6 +34,20 @@ def CauchyCombinationTest(p_values, weights=None):
 
 
 def fastSPARDA(X_samples, Y_samples, **kwargs):
+    """
+    Find a projection that separates two sample sets using the fastSPARDA method.
+
+    This method searches for a projection vector that maximizes the projected
+    Wasserstein distance between X_samples and Y_samples.
+
+    Args:
+        X_samples (numpy.ndarray): First set of samples.
+        Y_samples (numpy.ndarray): Second set of samples.
+        **kwargs: Optional parameters controlling optimization and cross-validation.
+
+    Returns:
+        tuple: Projection vector, Wasserstein distance, optimization cost, and best lambda value.
+    """
     #This method directly solves the original nonconvex formulation using subgradient
     # hill-climbing (with l1 penalty on the projection vector).
     # Thus it is more efficient, but results may heavily depend on 
@@ -113,7 +140,25 @@ def fastSPARDA(X_samples, Y_samples, **kwargs):
     return beta_hat, wass_dist, cost, best_lambda
 
 def l1SPARDA(xs, ys, _lambda, max_iter, eps, learning_rate, print_update, beta0=None):
-    
+    """
+    Optimize the SPARDA objective with an l1 penalty.
+
+    This method updates the projection vector using subgradient hill-climbing
+    and optional soft-thresholding for sparsity.
+
+    Args:
+        xs (numpy.ndarray): First set of samples.
+        ys (numpy.ndarray): Second set of samples.
+        _lambda (float): l1 regularization strength.
+        max_iter (int): Maximum number of iterations.
+        eps (float): Minimum improvement required to continue.
+        learning_rate (float): Base learning rate.
+        print_update (int): Frequency of progress updates.
+        beta0 (numpy.ndarray, optional): Initial projection vector. (default: None).
+
+    Returns:
+        tuple: Optimized projection vector and final objective value.
+    """
 
     n, d = xs.shape
     m = ys.shape[0]
@@ -213,6 +258,20 @@ def l1SPARDA(xs, ys, _lambda, max_iter, eps, learning_rate, print_update, beta0=
 
 
 def randomProjectionSearch(X_samples, Y_samples, **kwargs):
+    """
+    Search for a good projection using random directions.
+
+    This method evaluates random projection vectors and keeps the one that
+    maximizes the projected Wasserstein distance.
+
+    Args:
+        X_samples (numpy.ndarray): First set of samples.
+        Y_samples (numpy.ndarray): Second set of samples.
+        **kwargs: Optional parameters controlling the search.
+
+    Returns:
+        tuple: Best projection vector, best Wasserstein distance, and parameter settings.
+    """
     # Simple random search to find projection BETA which maximizes projected Wasserstein distance.
     # Optional arguments: max_iter = the number of random projections to try.
 
@@ -255,6 +314,20 @@ def randomProjectionSearch(X_samples, Y_samples, **kwargs):
 
 
 def projectedWasserstein(X_samples, Y_samples, beta):
+    """
+    Compute the projected squared Wasserstein distance between two sample sets.
+
+    This method projects both sample sets onto the direction beta and computes
+    the empirical squared Wasserstein distance between the projected values.
+
+    Args:
+        X_samples (numpy.ndarray): First set of samples.
+        Y_samples (numpy.ndarray): Second set of samples.
+        beta (numpy.ndarray): Projection vector.
+
+    Returns:
+        float: Projected squared Wasserstein distance.
+    """
     # Projected SQUARED empirical Wasserstein distance in direction beta
     # between X_samples and Y_samples.
 
@@ -304,8 +377,6 @@ def projectedWasserstein(X_samples, Y_samples, beta):
                 last_quant = quant_y
 
     return dist
-
-
 
 
 def gmm_bic_score(estimator, X):
