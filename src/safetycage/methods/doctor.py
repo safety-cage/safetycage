@@ -1,8 +1,6 @@
 import os
 import json
 import numpy as np
-import pyrootutils
-pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
 from ..ABC.safetycage import SafetyCage
 

@@ -1,11 +1,9 @@
 from typing import Any
-import pyrootutils
 from abc import ABC, abstractmethod
 import numpy as np
 import os
 import json
 import joblib
-pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
 class SafetyCage(ABC):
     """
@@ -160,10 +158,11 @@ class SafetyCage(ABC):
         """
         if greater_is_better:
             compare = lambda x, y: x > y
+            best_metric = -np.inf 
         else:
             compare = lambda x, y: x < y
+            best_metric = np.inf 
 
-        best_metric = -np.inf 
         best_alpha = -np.inf
         for t in np.linspace(min(y_probs), max(y_probs), num=1000):
 

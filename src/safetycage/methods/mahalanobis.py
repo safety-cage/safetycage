@@ -5,9 +5,6 @@ from numpy import linalg
 from scipy.stats import chi2, norm, f, combine_pvalues
 from statsmodels.distributions.empirical_distribution import ECDF
 
-import pyrootutils
-pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
-
 from ..utils.functions_library import CauchyCombinationTest
 
 from ..ABC.safetycage import SafetyCage

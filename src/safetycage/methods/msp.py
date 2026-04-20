@@ -2,9 +2,6 @@ import numpy as np
 import json
 import os
 
-import pyrootutils
-pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
-
 from ..ABC.safetycage import SafetyCage
 
 class MSP(SafetyCage):

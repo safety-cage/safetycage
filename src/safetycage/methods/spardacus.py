@@ -1,6 +1,5 @@
 import os
 import joblib
-import pyrootutils
 from tqdm import tqdm
 import numpy as np
 from scipy.stats import combine_pvalues
@@ -11,9 +10,6 @@ import warnings
 
 from ..utils.functions_library import CauchyCombinationTest, fastSPARDA, gmm_bic_score
 from ..ABC.safetycage import SafetyCage
-
-pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
-
 
 class SPARDACUS(SafetyCage):
     """

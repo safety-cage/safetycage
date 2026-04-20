@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Tuple, Union, List, Any, Dict
 import numpy as np
-import omegaconf
 
 class ModelModule(ABC):
     """
@@ -42,9 +41,9 @@ class ModelModule(ABC):
         # Handle different types of selected_layers input
         if isinstance(selected_layers, str):
             self.selected_layers = [selected_layers]
-        elif isinstance(selected_layers, (list, omegaconf.listconfig.ListConfig)):
+        elif isinstance(selected_layers, list):
             if all(isinstance(layer, str) for layer in selected_layers):
-                self.selected_layers = list(selected_layers)  # Convert to regular list if it's ListConfig
+                self.selected_layers = list(selected_layers)
             else:
                 raise ValueError("All elements in selected_layers must be strings")
         else:
