@@ -1,64 +1,62 @@
-# safetycage(-pypi) (SafetyCage Test Package)
+# SafetyCage
 
-This is the git repo that hosts the development and testing of the safetycage python package (src & tests respectfully).
+SafetyCage is a Python package for **detecting misclassified predictions** from machine learning models in classification tasks. It provides a unified interface for multiple statistical detection methods, enabling users to quantify prediction reliability and flag potentially incorrect outputs across different models and datasets easily.
 
-## Background?
+It is available on PyPI here: https://pypi.org/project/safetycage/.
+
+## Background
+
+The idea behind safetycage is that we can find statistics on each predicted sample, and compare that statisitic to some statisitc threshold "alpha" to predict whether the sample prediction was incorrectly classified.
 
 ## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+Machine learning models can produce incorrect predictions with high confidence. SafetyCage addresses this by providing post-hoc misclassification detection methods that operate on model outputs or internal representations.
 
-## Visuals
-- could put a gif on installing and using the package
+The package includes several methods:
 
-## Installation
-TBA
+- MSP (Maximum Softmax Probability)
+- DOCTOR (Error probability estimation)
+- Mahalanobis (Distance-based statistical testing)
+- SPARDACUS (Projection + density estimation approach)
+
+Each method outputs a statistic or p-value that reflects how likely a prediction is to be incorrect.
+
+Alternatively, you can implement your own method by initializing a base class from the safetycage abstract base class, that defines how methods should be implemented.
 
 ## Requirements
-- Python 3.11.7
+SafetyCage uses Python 3.11.7. Consider creating an environment for your project with safetycage that uses Python 3.11.7.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+## Installation
+Install via pip using the command:
+
+```
+pip install safetycage
+```
+
+The only additional packages you will need to work with safetycage are those required by your dataset and model.
+
+## Visuals
+- could put a gif on installing and using the package - don't think this is very necessary, should be obvious
+
+## Tutorials & Examples
+
+A separate repository contains full examples and tutorials at https://github.com/safety-cage/safetycage-tutorials.
 
 ## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Integrate with your tools
-
-* [Set up project integrations](https://gitlab.sintef.no/aai-internal/safetycage-pypi/-/settings/integrations)
-
-## Collaborate with your team
-
-* [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+If you encounter issues or have questions:
+- Open an issue on the repository
+- Check the safetycage-tutorials repo for examples
 
 ## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+- TBD
 
 ## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+- unsure
 
 ## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+- TBA
 
 ## License
 MIT License
 
 ## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+- active and under devlopment
