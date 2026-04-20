@@ -40,7 +40,7 @@ class Mahalanobis(SafetyCage):
 
     **Reference:**
         P. V. Johnsen and F. Remonato. “SafetyCage: A misclassification detector for 
-        feed-forward neural networks”. https://openreview.net/forum?id=cWSk6l1xGo.
+        feed-forward neural networks”. https://proceedings.mlr.press/v233/johnsen24a.html.
 
     Attributes:
         model_module: Reference to model module object for making predictions.

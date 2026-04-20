@@ -41,7 +41,7 @@ class SPARDACUS(SafetyCage):
 
     **Reference:**
         P. V. Johnsen and F. Remonato. “SPARDACUS SafetyCage: A new misclassification detector”.
-        https://openreview.net/forum?id=3FswRo4Lhj#discussion
+        https://proceedings.mlr.press/v265/johnsen25a.html
 
     Attributes:
         model_module: Reference to model module object for making predictions.

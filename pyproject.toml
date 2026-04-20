@@ -3,8 +3,8 @@ requires = ["uv_build >= 0.10.0, <0.11.0"]
 build-backend = "uv_build"
 
 [project]
-name = "safetycage_testing"
-version = "0.1.9"
+name = "safetycage"
+version = "0.0.1"
 authors = [
     { name="Pål Vegard Bun Johnsen", email="pal.johnsen@sintef.no" },
     { name="Joel Bjervig", email="Joel.Bjervig@sintef.no" },
