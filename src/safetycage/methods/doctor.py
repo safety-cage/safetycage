@@ -2,7 +2,7 @@ import os
 import json
 import numpy as np
 
-from ..ABC.safetycage import SafetyCage
+from ..safetycage import SafetyCage
 
 class DOCTOR(SafetyCage):
     """

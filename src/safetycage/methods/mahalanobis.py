@@ -7,7 +7,7 @@ from statsmodels.distributions.empirical_distribution import ECDF
 
 from ..utils.functions_library import CauchyCombinationTest
 
-from ..ABC.safetycage import SafetyCage
+from ..safetycage import SafetyCage
 
 class Mahalanobis(SafetyCage):
     """

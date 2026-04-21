@@ -9,7 +9,7 @@ from statsmodels.distributions.empirical_distribution import ECDF
 import warnings
 
 from ..utils.functions_library import CauchyCombinationTest, fastSPARDA, gmm_bic_score
-from ..ABC.safetycage import SafetyCage
+from ..safetycage import SafetyCage
 
 class SPARDACUS(SafetyCage):
     """

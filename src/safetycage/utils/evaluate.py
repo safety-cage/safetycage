@@ -3,8 +3,7 @@ from functools import partial
 from typing import List, Dict, Tuple, Union, Any, Optional
 from sklearn import metrics
 
-# from ..model.components.safetycage import SafetyCage
-from ..ABC.safetycage import SafetyCage
+from ..safetycage import SafetyCage
 
 def precision(TP, TN, FP, FN):
     """Compute precision (positive predictive value) from confusion matrix components."""

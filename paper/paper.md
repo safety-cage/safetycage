@@ -14,7 +14,7 @@ authors:
     equal-contrib: true
     affiliation: 1
   - given-name: Julia
-    surname: Qui
+    surname: Qiu
     equal-contrib: true
     affiliation: 2
 
@@ -53,6 +53,23 @@ By providing a unified abstraction layer, Safetycage bridges the gap between spe
 
 modules `safetycage.datamodule` and `safetycage.modelmodule`
 
+- ABC enforce users to have a certain setup
+- Hence, even if we switch to use different datasets (hence different data modules) and models (hence different model modules), the code shouldn't have to change (much)
+
+- Allow results to update with given cases (ex. plot_alpha)
+
+- Implement error catching in edge cases (ex. SPARDACUS when too few incorrect predictions)
+
+- General good SWE practices (Documentation
+Naming Clarity
+Avoid repeated code
+Avoid hardcoded values
+)
+
+- Assumptions we make about the user (simple machine learning understanding?, we don't explain what a train, val, test set is ...)
+
+- Testing with different OS
+
 `Gala`'s design philosophy is based on three core principles: (1) to provide a
 user-friendly, modular, object-oriented API, (2) to use community tools and
 standards (e.g., Astropy for coordinates and units handling), and (3) to use
@@ -71,6 +88,35 @@ Python layer handles unit conversions and prepares data to dispatch to the C
 layer appropriately.Within the coordinates subpackage, we extend Astropy's
 coordinate classes to add more specialized coordinate frames and
 transformations that are relevant for Galactic dynamics and Milky Way research.
+
+# Explaining Pivotal Functions & Methods
+
+- train_cage()
+- predict()
+- find_best_threshold()
+- flag()
+- find_best_threshold_flag()
+
+```python
+train_cage()
+
+3+1
+
+a = 1
+
+b = 2
+
+a + b
+
+```
+
+# Examples of Use
+
+## Installing
+
+## Data Loading
+
+## 
 
 # Research impact statement
 
@@ -104,7 +150,7 @@ core community infrastructure for galactic dynamics research.
 
 Let $\mathcal{D}_{\mathrm{train}}=\{(x_i,y_i)\}_{i=1}^{n}$ denote the training set. We first use $\mathcal{D}_{\mathrm{train}}$ to fit the predictive model $f_\theta$. For misclassification detection, methods that require parameter fitting (e.g., fitting score functions, class statistics, or calibration maps) are also trained on training data.
 
-Further, let $\hat y_i=f_\theta(x_i)$ be the model prediction for sample $i$. Define the true misclassification indicator as $m_i=\mathbf{1}\{\hat y_i\neq y_i\}$. Let $s_i=s_\phi(x_i)\in\mathbb{R}$ be the detector score, and define the thresholded detector decision as $\hat m_i(\alpha)=\mathbf{1}\{s_i\ge\alpha\}$. We will define how to find the optimal threshold $\alpha$ later.
+Further, let $\hat y_i=f_\theta(x_i)$ be the model prediction for sample $i$. Define the true misclassification indicator as $m_i=\mathbf{1}\{\hat y_i\neq y_i\}$. Let $s_i=s_\phi(x_i)\in\mathbb{R}$ be the detector score, and define the thresholded detector decision as either $\hat m_i(\alpha)=\mathbf{1}\{s_i\ge\alpha\}$ or $\hat m_i(\alpha)=\mathbf{1}\{s_i\le\alpha\}$. We will define how to find the optimal threshold $\alpha$ later.
 
 Building on the formulation where a predicted misclassification is flagged when a detection score $s_i$ exceeds a threshold $\alpha$, the specific methods implemented in `Safetycage` define their respective scoring functions as follows.
 

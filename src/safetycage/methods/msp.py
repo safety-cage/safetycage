@@ -2,7 +2,7 @@ import numpy as np
 import json
 import os
 
-from ..ABC.safetycage import SafetyCage
+from ..safetycage import SafetyCage
 
 class MSP(SafetyCage):
     """
