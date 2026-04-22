@@ -192,7 +192,9 @@ class SafetyCage(ABC):
     def save_cage(self, path):
         """
         Save the safety cage parameters, alpha and/or layer_params, to a specified folder path
-        in a file called "parameters.json" and/or "parameters.joblib".
+        in a file called "parameters.json" (alpha only) and/or "parameters.joblib" (both alpha and layer_params).
+
+        Checks for unreliable_classes in the case both alpha and layer_params exist, and saves if it is not empty
 
         Args:
             path (str): Folder path where the safety cage parameters should be saved
@@ -208,6 +210,10 @@ class SafetyCage(ABC):
                     'alpha': self.alpha,
                     'layer_params': self.layer_params
                 }
+
+                if getattr(self, "unreliable_classes", None): # An empty set is also false
+                    parameters['unreliable_classes'] = self.unreliable_classes
+
                 joblib.dump(parameters, parameters_path)
             
             else:
@@ -241,6 +247,9 @@ class SafetyCage(ABC):
                 self.alpha = parameters["alpha"]
                 self.layer_params = parameters["layer_params"]
 
+                if "unreliable_classes" in parameters:
+                    self.unreliable_classes = parameters["unreliable_classes"]
+
             elif path.endswith(".json"):
 
                 with open(path, "r") as f:
@@ -257,6 +266,9 @@ class SafetyCage(ABC):
             # Restore parameters
             self.alpha = parameters['alpha']
             self.layer_params = parameters['layer_params']
+
+            if "unreliable_classes" in parameters:
+                self.unreliable_classes = parameters["unreliable_classes"]
 
         elif os.path.exists(json_path):
 
