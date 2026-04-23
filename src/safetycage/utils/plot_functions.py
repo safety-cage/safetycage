@@ -117,28 +117,31 @@ def annotate_text_box(
 
 
 def plot_alpha_metric_curve(
-    alphas: np.ndarray,
-    metric_values: np.ndarray,
-    thresholds: np.ndarray,
-    scores: np.ndarray,
-    alpha_opt: float,
-    metric_max: float,
-    alpha_val: float,
-    metric_val: float,
+    alpha_test: np.ndarray,
+    metric_test: np.ndarray,
+    alpha_val: np.ndarray,
+    metric_val: np.ndarray,
+    max_alpha_test: float,
+    max_metric_test: float,
+    max_alpha_val: float,
+    max_metric_val: float,
     metric_name: str,
+    statistics_val: np.ndarray,
+    statistics_test: np.ndarray,
     output_path: str,
     # layout parameters
-    xlim: tuple[float, float] | None = None,
-    ylim: tuple[float, float] | None = None,
+    xlim: tuple[float, float] | None = (0,1),
+    ylim_metric: tuple[float, float] | None = None,
+    ylim_distribution: tuple[float, float] | None = None,
     save: bool = True,
-    opt_label_offset: tuple[float, float] = (0.0, 0.0),
+    test_label_offset: tuple[float, float] = (0.0, 0.0),
     val_label_offset: tuple[float, float] = (0.0, 0.0),
     zorder: int = -1,
-    y_padding: float = 10.0,            # divide (ymax-ymin) by this to get ylim padding, to ensure labels fit in figure
     test_colour: str = "blue",
     val_colour: str = "red",
-    test_vertical: str = "top",
-    val_vertical: str = "bottom",
+    test_relative_vertical: str = "top",
+    val_relative_vertical: str = "bottom",
+    n_bins_histogram: int = 100,
     save_dpi: int = 300,
     ) -> None:
     """
@@ -148,71 +151,103 @@ def plot_alpha_metric_curve(
     ("alpha_val" and "metric_val") thresholds and annotates the best test and validation points.
 
     Args:
-        alphas (numpy.ndarray): Alpha values for the test curve.
-        metric_values (numpy.ndarray): Metric values for the test curve.
-        thresholds (numpy.ndarray): Alpha values for the validation curve.
-        scores (numpy.ndarray): Metric values for the validation curve.
-        alpha_opt (float): Best test alpha value.
-        metric_max (float): Best test metric value.
-        alpha_val (float): Best validation alpha value.
-        metric_val (float): Best validation metric value.
+        alpha_test (numpy.ndarray): Alpha values for the test curve.
+        metric_test (numpy.ndarray): Metric values for the test curve.
+        alpha_val (numpy.ndarray): Alpha values for the validation curve.
+        metric_val (numpy.ndarray): Metric values for the validation curve.
+        max_alpha_test (float): Best test alpha value.
+        max_metric_test (float): Best test metric value.
+        max_alpha_val (float): Best validation alpha value.
+        max_metric_val (float): Best validation metric value.
         metric_name (str): Name of the metric being plotted.
         output_path (str): Directory where the figure should be saved.
-        xlim (tuple[float, float] | None, optional): X-axis limits. (default: None).
-        ylim (tuple[float, float] | None, optional): Y-axis limits. (default: None).
+        xlim (tuple[float, float] | None, optional): X-axis limits. (default: (0,1)).
+        ylim_metric (tuple[float, float] | None, optional): Y-axis limits for the metric. Automatically fits to the data. (default: None).
+        ylim_distribution (tuple[float, float] | None, optional): Y-axis limits for the alpha distribution. Automatically fits to the data. (default: None). 
         save (bool, optional): Whether to save the figure. (default: True).
-        opt_label_offset (tuple[float, float], optional): Offset for the test label. (default: (0.0, 0.0)).
+        test_label_offset (tuple[float, float], optional): Offset for the test label. (default: (0.0, 0.0)).
         val_label_offset (tuple[float, float], optional): Offset for the validation label. (default: (0.0, 0.0)).
-        zorder (int, optional): Drawing order of the curves. (default: -1).
+        zorder (int, optional): Drawing order of the metric curves. (default: -1).
         y_padding (float, optional): Padding factor for the y-axis. (default: 10.0).
         test_colour (str, optional): Colour of the test annotation. (default: "blue").
         val_colour (str, optional): Colour of the validation annotation. (default: "red").
-        test_vertical (str, optional): Vertical placement of the test annotation. (default: "top").
-        val_vertical (str, optional): Vertical placement of the validation annotation. (default: "bottom").
+        test_relative_vertical (str, optional): Vertical placement of the test annotation. (default: "top").
+        val_relative_vertical (str, optional): Vertical placement of the validation annotation. (default: "bottom").
+        n_bins_histogram (int, optional): Number of bins in the historgram. (default: 100).
         save_dpi (int, optional): Resolution used when saving the figure. (default: 300).
     """
-    plt.plot(alphas, metric_values, zorder=zorder)
-    plt.plot(thresholds, scores, zorder=zorder)
+    fig, ax1 = plt.subplots()
 
-    xlim = (min(min(alphas), min(thresholds)), max(max(alphas), max(thresholds)))
-    ymin = min(min(metric_values), min(scores))
-    ymax = max(max(metric_values), max(scores))
-    ylim = (ymin, ymax + (np.divide(ymax - ymin, y_padding)))
+    # --- Line plots ---
+    ax1.plot(alpha_test, metric_test, label="Test", zorder=zorder)
+    ax1.plot(alpha_val, metric_val, label="Validation", zorder=zorder)
+    ax1.set_ylabel(metric_name)
 
-    plt.xlim(*xlim)
-    plt.ylim(*ylim)
-
-    dx, dy = opt_label_offset
+    dx, dy = test_label_offset
     annotate_text_box(
-        alpha_opt,
-        metric_max,
+        max_alpha_test,
+        max_metric_test,
         metric_name,
         label_prefix="Test",
         colour=test_colour,
-        vertical=test_vertical,
+        vertical=test_relative_vertical,
         dx=dx,
         dy=dy,
     )
 
     dx, dy = val_label_offset
     annotate_text_box(
-        alpha_val,
-        metric_val,
+        max_alpha_val,
+        max_metric_val,
         metric_name,
         label_prefix="Val",
         colour=val_colour,
-        vertical=val_vertical,
+        vertical=val_relative_vertical,
         dx=dx,
         dy=dy,
     )
 
-    plt.xlabel("Alpha")
-    plt.ylabel(metric_name)
+    if ylim_metric is not None:
+        ax1.set_ylim(*ylim_metric)
+
+    # --- Second axis for histograms ---
+    ax2 = ax1.twinx()
+
+    ax2.hist(
+        statistics_val,
+        bins=n_bins_histogram,
+        alpha=0.3,
+        color=val_colour,
+        density=True,
+        label="Validation Alpha Distribution"
+    )
+
+    ax2.hist(
+        statistics_test,
+        bins=n_bins_histogram,
+        alpha=0.3,
+        color=test_colour,
+        density=True,
+        label="Test Alpha Distribution"
+    )
+
+    # Combine legends
+    lines, labels = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines + lines2, labels + labels2)
+
+    if ylim_distribution is not None:
+        ax2.set_ylim(*ylim_distribution)
+
+    plt.xlim(*xlim)
+
+    ax1.set_xlabel("Alpha")
+    ax2.set_ylabel("Statistics Density")
     if save:
         path = os.path.join(output_path, f"alpha_{metric_name}_curve.png")
         os.makedirs(os.path.dirname(path), exist_ok=True)
         plt.savefig(path, dpi=save_dpi)
-    plt.close()
+    plt.close(fig)
 
 
 def plot_confusion_matrix(

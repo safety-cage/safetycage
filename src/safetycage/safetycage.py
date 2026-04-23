@@ -112,6 +112,9 @@ class SafetyCage(ABC):
         This method identifies samples where the maximum/minimum probability is below/above a
         specified threshold (alpha), marking them as potentially incorrect classifications.
 
+        If some statistics are np.NaN values (as a result of unreliable_classes), the corresponding flag
+        will be set to np.NaN as well.
+
         *Requires safetycage.leq to be defined, not None.*
 
         Args:
@@ -121,7 +124,9 @@ class SafetyCage(ABC):
             numpy.ndarray: Boolean array where True indicates probabilities below/above the alpha threshold
                 depending on safetycage.leq
         """
-                
+        if self.leq is None:
+            raise ValueError("safetycage.leq is not defined. Define safetycage.leq to use the default flag method.")
+
         # Check priority of alpha parameter
         if alpha is None:
             # If not provided as input, try to use self.alpha
@@ -130,7 +135,12 @@ class SafetyCage(ABC):
             else:
                 # If neither source is available, raise an error
                 raise ValueError("Missing alpha parameter: must be provided as input or set as class attribute")
-            
+        
+        # compare = np.less_equal if self.leq else np.greater_equal
+
+        # flags = compare(statistics, alpha)
+        # flags = np.where(np.isnan(statistics), np.nan, flags)
+
         if self.leq:
             flags = statistics <= alpha
         elif not self.leq and self.leq is not None:
