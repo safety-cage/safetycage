@@ -227,15 +227,15 @@ class Mahalanobis(SafetyCage):
         return empirical_distribution_statistics
 
 
-    def predict(self, x, y) -> None:
+    def predict(self, x, y) -> np.ndarray:
         """Compute p-values for input data using Mahalanobis distance.
         
         Computes p-values per layer for each sample and combines them into a global p-value.
         Note: For activation values, nodes that are never activated need special handling.
         
         Args:
-            x: Input data samples
-            y: True labels
+            x (numpy.ndarray): Input data samples
+            y (numpy.ndarray): True labels
             
         Returns:
             combined_pvalue (numpy.ndarray): Global p-value per sample

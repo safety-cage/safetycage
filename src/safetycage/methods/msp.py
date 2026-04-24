@@ -51,7 +51,7 @@ class MSP(SafetyCage):
     """
         pass
 
-    def predict(self, x, y) -> None:
+    def predict(self, x, y) -> np.ndarray:
         """
         Compute misclassification detection statistic based on model predictions.
 

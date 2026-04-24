@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 from abc import ABC, abstractmethod
 import numpy as np
 import os
@@ -73,7 +73,7 @@ class SafetyCage(ABC):
     
     #Apply the SafetyCage on unseen test samples
     @abstractmethod
-    def predict(self, x, y) -> None:
+    def predict(self, x, y) -> Optional[np.ndarray]:
         """
         Evaluate input samples using the trained safety cage.
 
@@ -122,7 +122,7 @@ class SafetyCage(ABC):
             alpha (float): Threshold value for flagging samples (0 to 1)
         Returns:
             numpy.ndarray: Boolean array where True indicates probabilities below/above the alpha threshold
-                depending on safetycage.leq
+                depending on safetycage.leq. There are NaN values given for when the statistic is NaN.
         """
         if self.leq is None:
             raise ValueError("safetycage.leq is not defined. Define safetycage.leq to use the default flag method.")
@@ -136,17 +136,10 @@ class SafetyCage(ABC):
                 # If neither source is available, raise an error
                 raise ValueError("Missing alpha parameter: must be provided as input or set as class attribute")
         
-        # compare = np.less_equal if self.leq else np.greater_equal
-
-        # flags = compare(statistics, alpha)
-        # flags = np.where(np.isnan(statistics), np.nan, flags)
-
         if self.leq:
             flags = statistics <= alpha
         elif not self.leq and self.leq is not None:
             flags = statistics >= alpha
-        else:
-            raise ValueError("Define safetycage.leq")
 
         return flags
 

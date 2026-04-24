@@ -4,13 +4,13 @@ build-backend = "uv_build"
 
 [project]
 name = "safetycage"
-version = "0.0.512"
+version = "0.0.5"
 authors = [
     { name="Pål Vegard Bun Johnsen", email="pal.johnsen@sintef.no" },
     { name="Joel Bjervig", email="Joel.Bjervig@sintef.no" },
     { name="Julia Qiu", email="Julia.Qiu@sintef.no" },
 ]
-description = "The official safety cage package for misclassification detection in predictive models."
+description = "The official safetycage package for misclassification detection in predictive models."
 readme = "README.md"
 requires-python = "==3.11.7"
 classifiers = [

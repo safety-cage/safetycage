@@ -522,7 +522,7 @@ class SPARDACUS(SafetyCage):
         raise ValueError(f"Unknown test type: {test_type}")
 
 
-    def flag(self, statistics, alpha=None):
+    def flag(self, statistics, alpha=None) -> float | np.ndarray:
         """
         Flag samples with probability less than or equal (self.s_statistic_source == "correctly") to alpha 
         or probability more than or equal (self.s_statistic_source == "incorrectly") to alpha as incorrect.
@@ -532,7 +532,7 @@ class SPARDACUS(SafetyCage):
             alpha (float): Threshold for flagging samples
 
         Returns:
-            numpy.ndarray: Boolean array indicating flagged samples
+            numpy.ndarray: Boolean array indicating flagged samples with NaNs preserved for missing statistics.
         """
         # Check priority of alpha parameter
         if alpha is None:
@@ -543,7 +543,6 @@ class SPARDACUS(SafetyCage):
                 # If neither source is available, raise an error
                 raise ValueError("Missing alpha parameter: must be provided as input or set as class attribute")
             
-        
         if self.s_statistic_source == "correctly":
             # If alpha argument to flag() function not none, use this and not the one in config-file
             flags = (statistics <= alpha)
@@ -553,6 +552,26 @@ class SPARDACUS(SafetyCage):
             flags = ~(statistics <= alpha)
 
         return flags
+    
+    def remove_nan_values(self, statistics, y_true) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Remove samples with NaN p-values from the statistics and corresponding true labels.
+
+        Typically use after calling flag() to remove samples with NaN p-values before
+        further computing (ex. calculating metrics, plotting, etc.).
+
+        Args:
+            statistics (numpy.ndarray): Computed p-values
+            y_true (numpy.ndarray): True labels
+
+        Returns:
+            tuple: Cleaned statistics and corresponding true labels without NaN values
+        """
+        flag_nan_idx = np.flatnonzero(np.isnan(statistics))
+        y_true_clean = np.delete(y_true, flag_nan_idx)
+        statistics_clean = np.delete(statistics, flag_nan_idx)
+        
+        return statistics_clean, y_true_clean
 
 if __name__ == "__main__":
     SPARDACUS(None, None, None)

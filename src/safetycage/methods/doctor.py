@@ -64,12 +64,13 @@ class DOCTOR(SafetyCage):
         self.PE_1 = num_incorrect / total_samples
 
 
-    def predict(self, x, y) -> None:
+    def predict(self, x, y) -> np.ndarray:
         """
         Compute statistical metrics based on model predictions.
 
         Args:
             x (numpy.ndarray): Input data to be processed by the model.
+            y (numpy.ndarray): True labels
         
         Returns:
             numpy.ndarray: Array of maximum probabilities for each input sample.
