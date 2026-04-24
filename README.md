@@ -45,7 +45,7 @@ The dependencies should be automatically installed when you install safetycage. 
 To learn how to use safetycage, check out the safetycage tutorials available at https://github.com/safety-cage/safetycage-tutorials. These provide full examples and tutorials on how to use safetycage, and thus also providing scripts to train models to test the safetycage methods on!
 
 ## Changelog
-See the [CHANGELOG.MD](CHANGELOG.MD) for details on versioning.
+See the [CHANGELOG.MD](https://github.com/safety-cage/safetycage/blob/main/CHANGELOG.md) for details on versioning.
 
 ## Support
 If you encounter issues or have questions:
