@@ -49,72 +49,64 @@ Several software packages address related aspects of model reliability and data 
 
 By providing a unified abstraction layer, Safetycage bridges the gap between specialized OOD detection tools and general-purpose model auditing frameworks.
 
-# Software design
+# Software Design
 
-modules `safetycage.datamodule` and `safetycage.modelmodule`
+The abstract base classes (ABCs) are important in ensuring users use safetycage in a modular and efficient way. There are 3 ABCs defined:  `SafetyCage`, `ModelModule`, and `DataModule`. Each provides a basis for users to build and create their own classification methods and modules for data and model handling. In this way, users are forced to define the necessary requirements to use safetycage in a meaningful way. This helps avoid users misunderstanding how to use safetycage or misinterpreting the methods. 
 
-- ABC enforce users to have a certain setup
-- Hence, even if we switch to use different datasets (hence different data modules) and models (hence different model modules), the code shouldn't have to change (much)
+Both abstract and default methods are provided to enforce structure while also avoiding repeated code. For example, in the `SafetyCage` ABC, `train_cage()`, `predict()`, and `_compute_statistics()` are all abstract methods. Users are forced to define how they want their `SafetyCage` object to be trained, predict misclassifications, and compute statistics on each sample to determine whether or not that sample was misclassified. Since these depend on the method itself, they must be defined in a derived class.
 
-- Allow results to update with given cases (ex. plot_alpha)
+On the other hand, `flag()`, `find_best_threshold_flag()`, `save_cage()`, and `load_cage()` have a default definition. They are all essential, but generally tend to work in a similar way. Hence, to avoid repeated code across different `safetycage` methods, it is provided in the ABC.
 
-- Implement error catching in edge cases (ex. SPARDACUS when too few incorrect predictions)
+An integral part of using `safetycage` is the `datamodule` and `modelmodule`.
 
-- General good SWE practices (Documentation
-Naming Clarity
-Avoid repeated code
-Avoid hardcoded values
-)
+The data module and model module define how the data and model should be handled respectively. The `DataModule` ABC enforces users to define how to load data, transform it, and split into training and validation sets via `_load_data()`, `_transform()`, and `_split()`. The `ModelModule` defines accessor methods to clearly retrieve predictions, preactivations or activations (if any) via `_get_predictions()`, `_get_pre_activations()`, and `_get_activations()`.
 
-- Assumptions we make about the user (simple machine learning understanding?, we don't explain what a train, val, test set is ...)
+A key point of `SafetyCage` is that it accepts both the `DataModule` and `ModelModule` instances. Therefore, different safetycage methods can interact on the same `DataModule` and `ModelModule`, and alternatively, the same safetycage method can interact with different `DataModule` and `ModelModule` instances. This all falls backs to the beginning point of enforcing a certain structure with ABC classes. The modularity and strucutre defined in the use of ABC helps ensure easily compatiability across different datasets, models, and misclassification techniques easily.
 
-- Testing with different OS
+It is also worth mentioning that the safetycage methods enforce strong software engineering practices. In development, clarity, simplicity, robust error handling, and comprehensive coverage of edge cases were prioritized. The helper functions provided in `utils` cover multiple cases and do not fail given an incorrect value. An example of this is the `utils.plot_functions.plot_alpha_metric_curve()` function, which allows the user to provide multiple parameters to customize a graph of their statistic threshold values and their corresponding density and metric value. The user can easily define parameters to detail the number of bins in the histogram, the relative location of labels, colours, x-axis and y-axis bounds, image resolution, and more.
 
-`Gala`'s design philosophy is based on three core principles: (1) to provide a
-user-friendly, modular, object-oriented API, (2) to use community tools and
-standards (e.g., Astropy for coordinates and units handling), and (3) to use
-low-level code (C/C++/Cython) for performance while keeping the user interface
-in Python. Within each of the main subpackages in `gala` (`gala.potential`,
-`gala.dynamics`, `gala.integrate`, etc.), we try to maintain a consistent API
-for classes and functions. For example, all potential classes share a common
-base class and implement methods for computing the potential, forces, density,
-and other derived quantities at given positions. This also works for
-compositions of potentials (i.e., multi-component potential models), which
-share the potential base class but also act as a dictionary-like container for
-different potential components. As another example, all integrators implement a
-common interface for numerically integrating orbits. The integrators and core
-potential functions are all implemented in C without support for units, but the
-Python layer handles unit conversions and prepares data to dispatch to the C
-layer appropriately.Within the coordinates subpackage, we extend Astropy's
-coordinate classes to add more specialized coordinate frames and
-transformations that are relevant for Galactic dynamics and Milky Way research.
+Error catching was detailed because, particularly in the case of machine learning, there are often unique cases where assumptions fail. For example, SPARDACUS relies on the assumption that there is a positive amount of correct and incorrect classifications for each class. However, in the case where the model does well, and there are too few, SPARDACUS may not be applicable. The SPARDACUS implementation clearly throws warnings explaining which class has too few samples, when it becomes an issue, and how to address this throughout the misclassification detection pipeline.
 
-# Explaining Pivotal Functions & Methods
-
-- train_cage()
-- predict()
-- find_best_threshold()
-- flag()
-- find_best_threshold_flag()
-
-```python
-train_cage()
-
-3+1
-
-a = 1
-
-b = 2
-
-a + b
-
-```
+In the development of `safetycage`, readability and clarity were of primary focus in naming. Hardcoded values were avoided as much as possible. Documentation was of focus, and each class, method, or function has an associated docstring. However, it is worth mentioning that the docstrings assume the user has a simple machine learning understanding. For example, docstrings do not explain what a training, validation, and test set are. Testing was also performed on different operating systems to ensure that all users can easily use the safetycage package.
 
 # Examples of Use
 
-## Installing
+Here is a simple example of how to use the safetycage method, MSP, the `datamodule`, `modelmodule`.
 
-## Data Loading
+### Installing
+
+```
+pip install safetycage
+```
+
+### Data and Model Loading
+
+```python
+from safetycage.data import IrisDataModule
+from safetycage.model import IrisModelModule
+
+data_module = IrisDataModule(...)
+model = joblib.load("model.joblib")
+model_module = IrisModelModule(model, ...)
+```
+
+### SafetyCage Definition
+
+```python
+from safetycage import MSP
+
+safetycage = MSP(model_module=model_module, data_module=data_module)
+```
+
+### SafetyCage Training and Prediction
+
+```python
+safetycage.train_cage()
+
+statistics = safetycage.predict()
+
+alpha, optimum_alpha_metric = safetycage.find_best_threshold_flag()
+```
 
 ## 
 
@@ -181,7 +173,7 @@ J(\alpha),
 J(\alpha) = \mathcal{M}\!\left(\mathrm{TP},\mathrm{FP},\mathrm{TN},\mathrm{FN}\right),
 $$
 
-$$
+$$ nb
 \begin{aligned}
 \mathrm{TP} &= \sum_{i=1}^n \mathbf{1}\{\hat m_i(\alpha)=1,\ m_i=1\},\\
 \mathrm{FP} &= \sum_{i=1}^n \mathbf{1}\{\hat m_i(\alpha)=1,\ m_i=0\},\\
