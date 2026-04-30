@@ -112,8 +112,8 @@ Generative AI tools were used to create some of the docstrings and documentation
 
 # Acknowledgements
 
-We acknowledge contributions from Pål Johnsen and Filippo Remonato for developing two new misclassification methods, namely Mahalanobis and SPARDACUS.
+This work was supported by the Research Council of Norway through projects EXAIGON (grant no. XXX) and THEMIS (grant no. XXX), and by SINTEF internal funding.
 
-<!-- TODO: Resolve funding acknowledgements (EXAIGON, THEMIS, SINTEF internal projects, NFR) -->
+We acknowledge contributions from Pål Johnsen and Filippo Remonato for developing two new misclassification methods, namely Mahalanobis and SPARDACUS.
 
 # References
