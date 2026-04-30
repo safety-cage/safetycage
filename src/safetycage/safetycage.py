@@ -1,9 +1,8 @@
 from typing import Any, Optional
 from abc import ABC, abstractmethod
 import numpy as np
-import os
-import json
 import joblib
+from pathlib import Path
 
 class SafetyCage(ABC):
     """
@@ -143,7 +142,7 @@ class SafetyCage(ABC):
 
         return flags
 
-    def find_best_threshold_flag(self, y_true, y_probs, metric_fn, greater_is_better=True) -> float | np.ndarray:
+    def find_best_threshold(self, y_true, y_probs, metric_fn, greater_is_better=True) -> float | np.ndarray:
         """
         Find the optimal threshold for flagging samples by calling self.flag().
 
@@ -193,93 +192,57 @@ class SafetyCage(ABC):
         }
     
     def save_cage(self, path):
-        """
-        Save the safety cage parameters, alpha and/or layer_params, to a specified folder path
-        in a file called "parameters.json" (alpha only) and/or "parameters.joblib" (both alpha and layer_params).
-
-        Checks for unreliable_classes in the case both alpha and layer_params exist, and saves if it is not empty
+        """Save trained cage parameters to a joblib file.
 
         Args:
-            path (str): Folder path where the safety cage parameters should be saved
+            path (str or Path): File path to save to (should end in .joblib).
+
+        Raises:
+            ValueError: If the cage has not been trained (alpha not set).
         """
+        if getattr(self, "alpha", None) is None:
+            raise ValueError("Cannot save: cage has not been trained (alpha is not set).")
 
-        os.makedirs(path, exist_ok=True)
+        parameters = {"alpha": self.alpha}
 
-        if getattr(self, "alpha", None) is not None:
-            if getattr(self, "layer_params", None) is not None:
-                
-                parameters_path = os.path.join(path, 'parameters.joblib')
-                parameters = {
-                    'alpha': self.alpha,
-                    'layer_params': self.layer_params
-                }
+        if getattr(self, "layer_params", None) is not None:
+            parameters["layer_params"] = self.layer_params
 
-                if getattr(self, "unreliable_classes", None): # An empty set is also false
-                    parameters['unreliable_classes'] = self.unreliable_classes
+        if getattr(self, "unreliable_classes", None):
+            parameters["unreliable_classes"] = self.unreliable_classes
 
-                joblib.dump(parameters, parameters_path)
-            
-            else:
-
-                parameters_path = os.path.join(path, 'parameters.json')
-
-                with open(parameters_path, 'w') as f:
-                    json.dump({'alpha': str(self.alpha)}, f)
-
-        else:
-            raise ValueError("alpha is not set.")
-
-    def load_cage(self, path):
-        """
-        Load the safety cage parameters, alpha and/or layer_params, from a specified folder path.
-        
-        Looks for a parameters.json or parameters.joblib file respectively.
-        Load cage assumes only one of these two files are present in the folder, and gives priority 
-        to parameters.joblib if both are present.
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        joblib.dump(parameters, path)
+    
+    @classmethod
+    def load_cage(cls, path, model_module, data_module):
+        """Load a trained cage from a saved file.
 
         Args:
-            path (str): Path to the parameters file or directory where the safety cage parameters should be loaded.
+            path (str or Path): Path to the saved .joblib file.
+            model_module: The model module to use with the loaded cage.
+            data_module: The data module to use with the loaded cage.
+
+        Returns:
+            An instance of the cage class with trained parameters restored.
         """
-        joblib_path = os.path.join(path, "parameters.joblib")
-        json_path = os.path.join(path, "parameters.json")
+        path = Path(path)
+        if not path.is_file():
+            raise FileNotFoundError(f"No saved cage found at {path}")
 
-        if os.path.isfile(path):
-            if path.endswith(".joblib"):
+        parameters = joblib.load(path)
+
+        instance = cls(model_module=model_module, data_module=data_module)
+        instance.alpha = parameters["alpha"]
+
+        if "layer_params" in parameters:
+            instance.layer_params = parameters["layer_params"]
+
+        if "unreliable_classes" in parameters:
+            instance.unreliable_classes = parameters["unreliable_classes"]
+
+        return instance
                 
-                parameters = joblib.load(path)
-                self.alpha = parameters["alpha"]
-                self.layer_params = parameters["layer_params"]
-
-                if "unreliable_classes" in parameters:
-                    self.unreliable_classes = parameters["unreliable_classes"]
-
-            elif path.endswith(".json"):
-
-                with open(path, "r") as f:
-                    data = json.load(f)
-                self.alpha = float(data["alpha"])
-
-            else:
-                raise ValueError(f"Unsupported file type: {path}")
-            
-        elif os.path.exists(joblib_path):
-
-            parameters = joblib.load(joblib_path)
-            
-            # Restore parameters
-            self.alpha = parameters['alpha']
-            self.layer_params = parameters['layer_params']
-
-            if "unreliable_classes" in parameters:
-                self.unreliable_classes = parameters["unreliable_classes"]
-
-        elif os.path.exists(json_path):
-
-            with open(json_path, 'r') as f:
-                data = json.load(f)
-                self.alpha = float(data['alpha'])
-        else:
-            raise FileNotFoundError(f"Safety cage parameters file not found at {path}")
-
 if __name__ == "__main__":
     SafetyCage(None, None, None)
